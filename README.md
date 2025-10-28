@@ -6,7 +6,7 @@ Intended to simulate city traffic and life (eventually).
 ## Requirements
 
 - Raylib
-- CMake (for easier building — you can use any build system if you really want to)
+- CMake
 
 ## Compiling
 
