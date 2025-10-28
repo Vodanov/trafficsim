@@ -1,1 +1,0 @@
-/usr/bin/c++ -Wl,--dependency-file=CMakeFiles/trafficSim.dir/link.d CMakeFiles/trafficSim.dir/main.cpp.o -o trafficSim  /usr/lib/libraylib.so -L/usr/lib -lraylib

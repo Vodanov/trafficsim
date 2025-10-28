@@ -1,8 +1,0 @@
-{
-	"InstallScripts" : 
-	[
-		"/home/voda/cpp/game/build/cmake_install.cmake",
-		"/home/voda/cpp/game/build/src/cmake_install.cmake"
-	],
-	"Parallel" : false
-}
