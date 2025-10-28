@@ -33,12 +33,34 @@ public:
         }
     }
     board_t(const std::string& File){
-        // TODO: Make.
-        // Load the board_t from a file 
+      std::ifstream file(File);
+      std::string line;
+      u32 i = 0;
+      while(std::getline(file, line)){
+        std::vector<std::unique_ptr<cell_t>> row;
+        u32 j = 0;
+        for(auto& c : line){
+          row.push_back(std::make_unique<cell_t>(j, i));
+          row[j]->set(c);
+          j++;
+        }
+        boardBG.push_back(std::move(row));
+        i++;
+      }
     }
     void draw_board(){
         draw_cells();
         draw_entities();
+    }
+    ~board_t(){
+      std::ofstream file("board.tmp");
+      for(auto& row : boardBG){
+        for(auto& cell : row){
+          file << cell->info();
+        }
+        file << std::endl;
+      }
+      file.close();
     }
 private:
     std::vector<std::vector<std::unique_ptr<cell_t>>> boardBG; 

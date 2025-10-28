@@ -3,10 +3,11 @@
 #include "board.hpp"
 
 int main() {
-    board_t board;
     InitWindow(screenWidth, screenHeight, "Traffic sim");
-    u8 type = 0;
-    if(type == 1){
+    u8 type = 2;
+    //board_t board;
+    board_t board("board.tmp");
+    if(type >= 1){
         std::clock_t curr = std::clock();
         SetTargetFPS(60);
         while (!WindowShouldClose()) {

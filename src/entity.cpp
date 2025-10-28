@@ -64,12 +64,15 @@ public:
         u32 i = _x / cellSizeX;
         u32 j = _y / cellSizeY;
     }
-
+    u32 info(){
+      return _type;
+    }
     void draw(){
         DrawRectangle(_x, _y, cellSizeX, cellSizeY, _col);
     }
     cell_t(u32 posX, u32 posY) : _x(posX), _y(posY){}
     u16 _x, _y;
     Color _col{0,0,0,255};
-    u8 _c;
+    u8 _c = 0;
+    u8 _type;
 };
