@@ -1,0 +1,5 @@
+/home/voda/cpp/game/build/CMakeFiles/edit_cache.dir
+/home/voda/cpp/game/build/CMakeFiles/rebuild_cache.dir
+/home/voda/cpp/game/build/src/CMakeFiles/trafficSim.dir
+/home/voda/cpp/game/build/src/CMakeFiles/edit_cache.dir
+/home/voda/cpp/game/build/src/CMakeFiles/rebuild_cache.dir
