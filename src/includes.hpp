@@ -9,3 +9,4 @@
 #include <algorithm>
 #include <memory>
 #include "definitions.hpp"
+#include "gameSettings.hpp"
