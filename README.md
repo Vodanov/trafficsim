@@ -1,17 +1,21 @@
-# trafficsim
+# TrafficSim
 
-A small program that uses raylib to draw stuff. Intended to attempt at simulating city traffic and life.
+A small program that uses **Raylib** to draw stuff.  
+Intended to simulate city traffic and life (eventually).
 
-# Requirements:
+## Requirements
 
-Raylib
-CMake for easier building, you could use any lib if you really want to...
+- Raylib
+- CMake (for easier building — you can use any build system if you really want to)
 
-# Compiling
+## Compiling
 
-make a folder build and run:
+Create a folder named `build` and run:
+
+```bash
 cd build/
 cmake ..
 make
 ???
 profit
+```
