@@ -1,12 +1,10 @@
-#include "includes.hpp"
 #include "entity.cpp"
 #include "board.hpp"
 
 int main() {
     InitWindow(screenWidth, screenHeight, "Traffic sim");
     u8 type = 2;
-    //board_t board;
-    board_t board("board.tmp");
+    board_t board;
     if(type >= 1){
         std::clock_t curr = std::clock();
         SetTargetFPS(60);

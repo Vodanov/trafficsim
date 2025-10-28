@@ -1,9 +1,6 @@
 #pragma once
 #include "gameSettings.hpp"
 #include "entity.hpp"
-#include "includes.hpp"
-#include <cmath>
-#include <cstdint>
 #include <raylib.h>
 //     void DrawRectanglePro(Rectangle rec, Vector2 origin, float rotation, Color color);                 // Draw a color-filled rectangle with pro parameters
 class entity_t {
@@ -34,21 +31,26 @@ private:
 };
 class cell_t {
 public:
-    void set(u32 i){
-        if (i == 1){
-            _col.r = 255;
-            _col.g = 1;
+    void set(u8 i){
+        _c = i;
+        if (i == 0){
+            _col = {0, 0,0,255};
+        }else if (i == 1){
+            _col = {0, 128,0,255};
+        }else if (i == 2){
+            _col = {0, 0,128,255};
+        }else if (i == 3){
+            _col = {255, 255,255,255};
+        }else {
+            _col = {128, 0,0,255};
         }
-        if ( i == 2)
-            _col.b = 128;
     }
     void set(Color col){
         _col = col;
     }
     void set(){
-
         if (_c == 0){
-            _col = {128, 0,0,255};
+            _col = {0, 0,0,255};
         }else if (_c == 1){
             _col = {0, 128,0,255};
         }else if (_c == 2){
@@ -56,7 +58,7 @@ public:
         }else if (_c == 3){
             _col = {255, 255,255,255};
         }else {
-            _col = {0, 0,0,255};
+            _col = {128, 0,0,255};
         }
         _c++;
     }
@@ -64,15 +66,15 @@ public:
         u32 i = _x / cellSizeX;
         u32 j = _y / cellSizeY;
     }
-    u32 info(){
-      return _type;
+    char info(){
+      return _c;
     }
     void draw(){
+        set(_c);
         DrawRectangle(_x, _y, cellSizeX, cellSizeY, _col);
     }
     cell_t(u32 posX, u32 posY) : _x(posX), _y(posY){}
     u16 _x, _y;
     Color _col{0,0,0,255};
-    u8 _c = 0;
-    u8 _type;
+    u8 _c{0};
 };
