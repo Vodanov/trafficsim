@@ -1,25 +1,26 @@
 #pragma once
 #include "cell.cpp"
 #include "entity.cpp"
+#include "entity.hpp"
 #include "gameSettings.hpp"
 #include <fstream>
 #include <memory>
 #include <string>
 class board_t {
 public:
-  auto &at(u32 idx) { return boardBG.at(idx); }
+  inline auto &at(u32 idx) { return boardBG.at(idx); }
   void draw_cells() {
     for (auto &row : boardBG)
       for (auto &cell : row)
         cell->draw();
   }
   void draw_entities() {
-    for (auto &row : entities)
-      for (auto &entity : row)
-        entity->draw();
-    // DrawRectanglePro({entity->_x, entity->_y, entity->_width,
-    // entity->_height},{cellSizeX/2.0f, cellSizeY/2.0f}, entity->rotation,
-    // entity->_color);
+    for (auto &entity : entities) {
+      entity->draw();
+    }
+  }
+  void create_entity(u32 x, u32 y, Color col) {
+    entities.push_back(std::make_unique<entity_t>(x, y, col));
   }
 
   board_t() {
@@ -67,5 +68,5 @@ public:
 
 private:
   std::vector<std::vector<std::unique_ptr<cell_t>>> boardBG;
-  std::vector<std::vector<std::unique_ptr<entity_t>>> entities;
+  std::vector<std::unique_ptr<entity_t>> entities;
 };

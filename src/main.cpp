@@ -1,4 +1,5 @@
 #include "board.hpp"
+#include <raylib.h>
 int main() {
   InitWindow(screenWidth, screenHeight, "Traffic sim");
   u8 type = 2;
@@ -15,7 +16,14 @@ int main() {
         uint32_t cellX = mousePos.x / cellSizeX;
         uint32_t cellY = mousePos.y / cellSizeX;
         board.at(cellY).at(cellX)->set();
-        std::cout << "[SETTING CELL] AT" << cellX << ' ' << cellY << '\n';
+        std::cout << "[CELL] -> " << cellX << ' ' << cellY << '\n';
+      }
+      if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON)) {
+        Vector2 mousePos = GetMousePosition();
+        uint32_t cellX = mousePos.x / cellSizeX;
+        uint32_t cellY = mousePos.y / cellSizeX;
+        board.create_entity(cellX, cellY, (Color){255, 0, 0, 255});
+        std::cout << "[Entity] -> " << cellX << ' ' << cellY << '\n';
       }
       EndDrawing();
     }
@@ -28,7 +36,7 @@ int main() {
       }
     }
     std::clock_t curr = std::clock();
-    SetTargetFPS(5);
+    SetTargetFPS(60);
     while (!WindowShouldClose()) {
       BeginDrawing();
       ClearBackground(RAYWHITE);

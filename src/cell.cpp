@@ -27,6 +27,8 @@ void cell_t::set() {
     _col = {128, 0, 0, 255};
   }
   _c++;
+  if (_c >= 4)
+    _c = 0;
 }
 void cell_t::move(u8 dir) {
   u32 i = _x / cellSizeX;
