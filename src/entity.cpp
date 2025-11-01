@@ -1,8 +1,36 @@
-#pragma once
 #include "entity.hpp"
-#include "gameSettings.hpp"
-#include <raylib.h>
-//     void DrawRectanglePro(Rectangle rec, Vector2 origin, float rotation,
-//     Color color);                 // Draw a color-filled rectangle with pro
-//     parameters
-// void entity_t::draw() { DrawRectangle(_x, _y, cellSizeX, cellSizeY, _col); }
+void entity_t::move() {
+  Vector2 curr = _positions.front();
+  switch (_dir) {
+  case 0:
+    break;
+  case 1:
+    _positions.front().x -= cellSizeX;
+    break;
+  case 2:
+    _positions.front().x += cellSizeX;
+    break;
+  case 3:
+    _positions.front().y += cellSizeY;
+    break;
+  case 4:
+    _positions.front().y -= cellSizeY;
+    break;
+  default:
+    break;
+  }
+  for (u32 i = 1; i < _positions.size(); i++) {
+    Vector2 tmp = _positions.at(i);
+    _positions.at(i) = curr;
+    curr = tmp;
+  }
+}
+void entity_t::get_id() {
+  id = __counter;
+  __counter++;
+}
+void entity_t::draw() {
+  move();
+  for (auto &pos : _positions)
+    DrawRectangle(pos.x, pos.y, cellSizeX, cellSizeY, _col);
+}

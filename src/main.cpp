@@ -1,4 +1,5 @@
 #include "board.hpp"
+#include <iostream>
 #include <raylib.h>
 int main() {
   InitWindow(screenWidth, screenHeight, "Traffic sim");
@@ -11,28 +12,25 @@ int main() {
       BeginDrawing();
       ClearBackground(RAYWHITE);
       board.draw_board();
+      Vector2 mousePos = GetMousePosition();
+      float cellX = mousePos.x / cellSizeX;
+      float cellY = mousePos.y / cellSizeX;
       if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-        Vector2 mousePos = GetMousePosition();
-        uint32_t cellX = mousePos.x / cellSizeX;
-        uint32_t cellY = mousePos.y / cellSizeX;
-        board.at(cellY).at(cellX)->set();
+        board.at(cellY, cellX)->set();
         std::cout << "[CELL] -> " << cellX << ' ' << cellY << '\n';
       }
       if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON)) {
-        Vector2 mousePos = GetMousePosition();
-        uint32_t cellX = mousePos.x / cellSizeX;
-        uint32_t cellY = mousePos.y / cellSizeX;
-        board.create_entity(cellX, cellY, (Color){255, 0, 0, 255});
+        board.create_entity(cellX, cellY, {255, 0, 0, 255}, {0, 0});
         std::cout << "[Entity] -> " << cellX << ' ' << cellY << '\n';
       }
       EndDrawing();
     }
   } else {
-    for (uint32_t i = 0; i < screenHeight / cellSizeY; i++) {
-      for (uint32_t j = 0; j < screenWidth / cellSizeX; j++) {
+    for (u32 i = 0; i < screenHeight / cellSizeY; i++) {
+      for (u32 j = 0; j < screenWidth / cellSizeX; j++) {
         if ((j + i) % 2 == 0)
           continue;
-        board.at(i).at(j)->set(1);
+        board.at(i, j)->set(1);
       }
     }
     std::clock_t curr = std::clock();

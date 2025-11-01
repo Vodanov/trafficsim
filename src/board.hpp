@@ -1,28 +1,17 @@
-#pragma once
-#include "cell.cpp"
-#include "entity.cpp"
+#include "cell.hpp"
 #include "entity.hpp"
-#include "gameSettings.hpp"
 #include <fstream>
 #include <memory>
+#include <raylib.h>
 #include <string>
+#include <vector>
 class board_t {
 public:
-  inline auto &at(u32 idx) { return boardBG.at(idx); }
-  void draw_cells() {
-    for (auto &row : boardBG)
-      for (auto &cell : row)
-        cell->draw();
-  }
-  void draw_entities() {
-    for (auto &entity : entities) {
-      entity->draw();
-    }
-  }
-  void create_entity(u32 x, u32 y, Color col) {
-    entities.push_back(std::make_unique<entity_t>(x, y, col));
-  }
-
+  std::unique_ptr<cell_t> &at(u32 idx, u32 idx2);
+  void draw_cells();
+  void draw_entities();
+  void create_entity(float x, float y, Color col, Vector2 dest);
+  void draw_board();
   board_t() {
     std::ifstream file("board.brd");
     if (!file.is_open()) {
@@ -51,10 +40,6 @@ public:
       i += cellSizeY;
     }
   }
-  void draw_board() {
-    draw_cells();
-    draw_entities();
-  }
   ~board_t() {
     std::ofstream file("board.brd");
     for (auto &row : boardBG) {
@@ -68,5 +53,6 @@ public:
 
 private:
   std::vector<std::vector<std::unique_ptr<cell_t>>> boardBG;
-  std::vector<std::unique_ptr<entity_t>> entities;
+  std::vector<entity_t> entities;
+  std::vector<Vector2> find_path(Vector2 start, Vector2 end);
 };

@@ -30,10 +30,7 @@ void cell_t::set() {
   if (_c >= 4)
     _c = 0;
 }
-void cell_t::move(u8 dir) {
-  u32 i = _x / cellSizeX;
-  u32 j = _y / cellSizeY;
-}
+void cell_t::move(u8 dir) {}
 char cell_t::info() { return _c; }
 void cell_t::draw() {
   set(_c);

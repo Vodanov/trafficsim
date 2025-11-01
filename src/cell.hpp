@@ -1,4 +1,3 @@
-#include "includes.hpp"
 /*
     _c -> type of terrain
     0 -> road
@@ -6,6 +5,8 @@
     2 -> building
     3 -> stop signal
 */
+#include "definitions.hpp"
+#include <raylib.h>
 class cell_t {
 public:
   void set(u8 i);
