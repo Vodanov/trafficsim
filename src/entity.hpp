@@ -1,13 +1,15 @@
 #pragma once
 #include "definitions.hpp"
 #include <ctime>
+#include <queue>
 #include <raylib.h>
+#include <stack>
 #include <vector>
 static u16 __counter;
 class entity_t {
 public:
   std::vector<Vector2> _positions{{0, 0}};
-  std::vector<Vector2> _path;
+  std::stack<Vector2> _path;
   Vector2 _dest{0, 0};
   Color _col{0, 0, 0, 0};
   time_t _time;

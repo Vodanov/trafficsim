@@ -1,4 +1,5 @@
 #include "board.hpp"
+#include "definitions.hpp"
 #include <iostream>
 #include <raylib.h>
 int main() {
@@ -13,8 +14,8 @@ int main() {
       ClearBackground(RAYWHITE);
       board.draw_board();
       Vector2 mousePos = GetMousePosition();
-      float cellX = mousePos.x / cellSizeX;
-      float cellY = mousePos.y / cellSizeX;
+      u32 cellX = mousePos.x / cellSizeX;
+      u32 cellY = mousePos.y / cellSizeX;
       if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         board.at(cellY, cellX)->set();
         std::cout << "[CELL] -> " << cellX << ' ' << cellY << '\n';

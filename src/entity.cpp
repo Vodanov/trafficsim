@@ -1,7 +1,13 @@
 #include "entity.hpp"
+#include "definitions.hpp"
 void entity_t::move() {
+  if (_path.empty())
+    return;
   Vector2 curr = _positions.front();
-  switch (_dir) {
+  _positions.front().x = _path.top().x * cellSizeX;
+  _positions.front().y = _path.top().y * cellSizeX;
+  _path.pop();
+  /*switch (_dir) {
   case 0:
     break;
   case 1:
@@ -23,7 +29,7 @@ void entity_t::move() {
     Vector2 tmp = _positions.at(i);
     _positions.at(i) = curr;
     curr = tmp;
-  }
+  }*/
 }
 void entity_t::get_id() {
   id = __counter;

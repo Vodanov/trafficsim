@@ -3,6 +3,7 @@
 #include <fstream>
 #include <memory>
 #include <raylib.h>
+#include <stack>
 #include <string>
 #include <vector>
 class board_t {
@@ -54,5 +55,5 @@ public:
 private:
   std::vector<std::vector<std::unique_ptr<cell_t>>> boardBG;
   std::vector<entity_t> entities;
-  std::vector<Vector2> find_path(Vector2 start, Vector2 end);
+  std::stack<Vector2> find_path(Vector2 start, Vector2 end);
 };
