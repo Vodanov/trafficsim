@@ -1,12 +1,11 @@
 #include "board.hpp"
 #include "definitions.hpp"
-#include <algorithm>
 #include <iostream>
 #include <print>
 #include <queue>
 #include <raylib.h>
 #include <stack>
-#include <unordered_set>
+#include <unordered_map>
 #include <vector>
 void board_t::draw_cells() {
   for (auto &row : boardBG)
@@ -14,11 +13,8 @@ void board_t::draw_cells() {
       cell->draw();
 }
 void board_t::create_entity(float x, float y, Color col, Vector2 dest) {
-  std::cout << "Creating entity:\n";
   entity_t new_ent(x, y, col);
-  std::cout << "Searching for path\n";
   std::stack<Vector2> paths = find_path({x, y}, dest);
-  std::cout << "Adding to the list\n";
   new_ent._path = std::move(paths);
   entities.push_back(new_ent);
 }
@@ -36,79 +32,52 @@ std::unique_ptr<cell_t> &board_t::at(u32 idx, u32 idx2) {
 }
 const u32 static tableWidth = screenWidth / cellSizeX;
 const u32 static tableHeight = screenHeight / cellSizeY;
-
-void dfs(u8 &found, std::stack<Vector2> &path, std::vector<u8> &table,
-         Vector2 &end) {
-  if (found)
-    return;
-
-  if (path.empty()) {
-    return;
-  }
-
-  Vector2 top = path.top();
-  u32 x = top.x;
-  u32 y = top.y;
-
-  if (x >= tableWidth || y >= tableHeight) {
-    if (!path.empty())
-      path.pop();
-    return;
-  }
-
-  if (x == end.x && y == end.y) {
-    found = 1;
-    return;
-  }
-
-  if (table[x + y * tableWidth] == 1) {
-    return;
-  }
-
-  table[x + y * tableWidth] = 1;
-
-  if (x + 1 < tableWidth) {
-    u32 nx = x + 1;
-    if (!table[nx + y * tableWidth]) {
-      path.push({(float)nx, (float)y});
-      dfs(found, path, table, end);
-      if (found)
-        return;
-      if (!path.empty())
-        path.pop();
+namespace std {
+template<>
+struct hash<Vector2> {
+    size_t operator()(const Vector2& v) const noexcept {
+        // convert to integers first if necessary
+        auto x = static_cast<int>(v.x);
+        auto y = static_cast<int>(v.y);
+        // simple, fast hash combo
+        return (static_cast<size_t>(x) * 73856093) ^ (static_cast<size_t>(y) * 19349663);
     }
-  }
-  if (x > 0) {
-    u32 nx = x - 1;
-    if (!table[nx + y * tableWidth]) {
-      path.push({(float)nx, (float)y});
-      dfs(found, path, table, end);
-      if (found)
-        return;
-      if (!path.empty())
-        path.pop();
+};
+}
+
+bool operator==(const Vector2& a, const Vector2& b) {
+    return a.x == b.x && a.y == b.y;
+}
+bool operator!=(const Vector2& a, const Vector2& b) {
+    return a.x != b.x || a.y != b.y;
+}
+void board_t::bfs(std::vector<u8> &table,
+         Vector2 &end, Vector2& start, std::stack<Vector2>& path) {
+  std::queue<Vector2> paths;
+  std::unordered_map<Vector2, Vector2> parents;
+  paths.push(start);
+  Vector2 diffs[] = {{1,0}, {-1,0}, {0,1},{0,-1}};
+  while (!paths.empty()){
+    auto curr = paths.front();
+    std::cout << curr.x << ' ' << curr.y << '\n';
+    if (curr.x == end.x && curr.y == end.y){
+      path.push(end);
+      curr = parents[end];
+      while(curr != start){
+        path.push(curr);
+        curr = parents[curr];
+      }
+      return;
     }
-  }
-  if (y + 1 < tableHeight) {
-    u32 ny = y + 1;
-    if (!table[x + ny * tableWidth]) {
-      path.push({(float)x, (float)ny});
-      dfs(found, path, table, end);
-      if (found)
-        return;
-      if (!path.empty())
-        path.pop();
-    }
-  }
-  if (y > 0) {
-    u32 ny = y - 1;
-    if (!table[x + ny * tableWidth]) {
-      path.push({(float)x, (float)ny});
-      dfs(found, path, table, end);
-      if (found)
-        return;
-      if (!path.empty())
-        path.pop();
+    paths.pop();
+    for(auto [x, y] : diffs){
+      float nx = curr.x + x;
+      float ny = curr.y + y;
+      if ((i32)nx < 0 || (i32)ny < 0 || (u32)nx >= tableWidth || (u32)ny >= tableHeight || table[nx + ny * tableWidth] || boardBG[(i32)ny][(i32)nx]->_c != 0)
+        continue;
+      parents[{nx, ny}] = curr;
+      table[nx + ny * tableWidth] = 1;
+      paths.push({curr.x + x, curr.y + y});
     }
   }
 }
@@ -117,6 +86,6 @@ std::stack<Vector2> board_t::find_path(Vector2 start, Vector2 end) {
   std::vector<u8> table(screenWidth / cellSizeX * screenHeight / cellSizeY, 0);
   u8 found = 0;
   path.push(end);
-  dfs(found, path, table, start);
+  bfs(table, end ,start, path);
   return path;
 }

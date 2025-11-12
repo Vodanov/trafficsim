@@ -13,6 +13,7 @@ public:
   void draw_entities();
   void create_entity(float x, float y, Color col, Vector2 dest);
   void draw_board();
+  bool valid_road(i32 x, i32 y);
   board_t() {
     std::ifstream file("board.brd");
     if (!file.is_open()) {
@@ -53,6 +54,8 @@ public:
   }
 
 private:
+void bfs(std::vector<u8> &table,
+         Vector2 &end, Vector2& start, std::stack<Vector2>& path);
   std::vector<std::vector<std::unique_ptr<cell_t>>> boardBG;
   std::vector<entity_t> entities;
   std::stack<Vector2> find_path(Vector2 start, Vector2 end);
