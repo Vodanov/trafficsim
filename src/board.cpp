@@ -33,6 +33,9 @@ void board_t::draw_entities(u8 &pause) {
       if (!(cell._t == SIGNAL_DOWN_RED || cell._t == SIGNAL_LEFT_RED ||
             cell._t == SIGNAL_RIGHT_RED || cell._t == SIGNAL_UP_RED))
         entity.move(dir);
+        else{
+          entity._speed = 0;
+        }
 
     }
     entity.draw(pause);
@@ -142,10 +145,9 @@ void board_t::bfs(std::vector<u8> &table, Vector2 &end, Vector2 &start,
   std::unordered_map<Vector2, Vector2> parents;
   paths.push(start);
   Vector2 diffs[] = {
-      {1, 0}, {-1, 0}, {0, 1}, {0, -1}}; //, {1,1}, {-1,1}, {1,-1}, {-1,-1}};
+      {1, 0}, {-1, 0}, {0, 1}, {0, -1}};
   while (!paths.empty()) {
     auto curr = paths.front();
-    std::cout << curr.x << ' ' << curr.y << '\n';
     if (curr.x == end.x && curr.y == end.y) {
       path.push(end);
       curr = parents[end];

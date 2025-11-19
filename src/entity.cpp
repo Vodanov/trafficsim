@@ -4,6 +4,10 @@
 void entity_t::move(u8 &dir) {
   if (_speed <= _maxSpeed)
     _speed += _acceleration;
+  if(dir != _dir){
+    _dir = dir;
+    _speed /= 2;
+  }
   switch (dir) {
   case 1:
     _relative_position.x += _speed;

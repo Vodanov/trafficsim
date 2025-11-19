@@ -16,6 +16,4 @@ Create a folder named `build` and run:
 cd build/
 cmake ..
 make
-???
-profit
 ```

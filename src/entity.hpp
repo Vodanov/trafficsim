@@ -13,8 +13,8 @@ public:
   Vector2 _dest{0, 0};
   Color _col{0, 0, 0, 0};
   time_t _time;
-  //u8 _dir{0}, _madness{0}, _type{0};
-  float _speed{0.0f}, _maxSpeed{1.0f}, _acceleration{0.005f};
+  u8 _dir{0};
+  float _speed{0.0f}, _maxSpeed{0.5f}, _acceleration{0.005f};
   void draw(u8 &pause);
   void move(u8& dir);
   Vector2 next_pos();

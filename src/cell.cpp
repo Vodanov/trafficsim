@@ -94,7 +94,6 @@ void cell_t::draw(double time, u8 &pause) {
   }
   // enums for signal
   if (time - _time >= 5 && (_t >= 18 && _t <= 29)) {
-    std::cout << time << ' ' << _time << '\n';
     set();
     _time = time;
   }
