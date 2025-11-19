@@ -1,29 +1,23 @@
 #pragma once
 #include "definitions.hpp"
-#include <ctime>
-#include <queue>
 #include <raylib.h>
 #include <stack>
 #include <vector>
-static u16 __counter;
 class entity_t {
 public:
   std::vector<Vector2> _positions{{0, 0}};
   std::stack<Vector2> _path;
   Vector2 _dest{0, 0};
   Color _col{0, 0, 0, 0};
-  time_t _time;
+  double _time;
   u8 _dir{0};
   float _speed{0.0f}, _maxSpeed{0.5f}, _acceleration{0.005f};
   void draw(u8 &pause);
   void move(u8& dir);
   Vector2 next_pos();
-  entity_t() { get_id(); }
   entity_t(u16 x, u16 y);
   entity_t(u16 x, u16 y, Color col);
 
 private:
   Vector2 _relative_position{0.0f,0.0f};
-  u16 id;
-  void get_id();
 };

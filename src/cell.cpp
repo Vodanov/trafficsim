@@ -1,6 +1,5 @@
 #include "cell.hpp"
 #include "definitions.hpp"
-#include <iostream>
 #include <raylib.h>
 std::unordered_map<u8, Color> typeToColor = {
     {BASE_ROAD, {0, 0, 0, 255}},
@@ -83,7 +82,7 @@ void cell_t::set() {
   }
   _col = typeToColor[_t];
 }
-cell_t::cell_t(u32 posX, u32 posY) : _x(posX), _y(posY){ set(_c); }
+cell_t::cell_t(i32 posX, i32 posY) : _x(posX), _y(posY){ set(_c); }
 void cell_t::move(u8 dir) {}
 char cell_t::info() { return _t; }
 void cell_t::draw(double time, u8 &pause) {
@@ -92,7 +91,6 @@ void cell_t::draw(double time, u8 &pause) {
     DrawRectangle(_x, _y, cellSizeX, cellSizeY, _col);
     return;
   }
-  // enums for signal
   if (time - _time >= 5 && (_t >= 18 && _t <= 29)) {
     set();
     _time = time;

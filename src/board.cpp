@@ -7,6 +7,32 @@
 #include <stack>
 #include <unordered_map>
 #include <vector>
+#include <fstream>
+#include <iostream>
+#include <string>
+std::unordered_map<u8, u8> tileToValue{{BASE_ROAD, 0},
+                                     {ROAD_UP, 1},
+                                     {ROAD_DOWN, 2},
+                                     {ROAD_LEFT, 1},
+                                     {ROAD_LEFT_DOWN, 1},
+                                     {ROAD_LEFT_UP, 1},
+                                     {ROAD_RIGHT_DOWN, 1},
+                                     {ROAD_RIGHT_UP, 1},
+                                     {ROAD_CROSS, 1},
+                                     {GRASS, 0},
+                                     {BUILDING, 0},
+                                     {SIGNAL_UP_RED, 1},
+                                     {SIGNAL_RIGHT_RED, 1},
+                                     {SIGNAL_DOWN_RED, 1},
+                                     {SIGNAL_LEFT_RED, 1},
+                                     {SIGNAL_UP_YELLOW, 1},
+                                     {SIGNAL_RIGHT_YELLOW, 1},
+                                     {SIGNAL_DOWN_YELLOW, 1},
+                                     {SIGNAL_LEFT_YELLOW, 1},
+                                     {SIGNAL_UP_GREEN, 1},
+                                     {SIGNAL_RIGHT_GREEN, 1},
+                                     {SIGNAL_DOWN_GREEN, 1},
+                                     {SIGNAL_LEFT_GREEN, 1}};
 void board_t::size() {
   std::cout << boardBG.size() << ' ' << boardBG.front().size() << '\n';
 }
@@ -16,6 +42,8 @@ void board_t::draw_cells(u8 &pause) {
       cell.draw(GetTime(), pause);
 }
 void board_t::create_entity(float x, float y, Color col, Vector2 dest) {
+  if (tileToValue[at((i32)y, (i32)x)._c] == 0)
+    return;
   entity_t new_ent(x, y, col);
   std::stack<Vector2> paths = find_path({x, y}, dest);
   new_ent._path = std::move(paths);
@@ -27,16 +55,15 @@ void board_t::draw_entities(u8 &pause) {
     if (nextPos.x == entity._dest.x && nextPos.y == entity._dest.y)
       continue;
     if (!pause) {
-      auto nx = nextPos.x - entity._positions.front().x, ny = nextPos.y - entity._positions.front().y;
+      auto nx = nextPos.x - entity._positions.front().x,
+           ny = nextPos.y - entity._positions.front().y;
       u8 dir = (nx >= 1) ? 1 : (nx <= -1) ? 2 : (ny >= 1) ? 3 : 4;
       auto &cell = at(nextPos.y, nextPos.x);
-      if (!(cell._t == SIGNAL_DOWN_RED || cell._t == SIGNAL_LEFT_RED ||
-            cell._t == SIGNAL_RIGHT_RED || cell._t == SIGNAL_UP_RED))
+      if (cell._t == SIGNAL_DOWN_RED || cell._t == SIGNAL_LEFT_RED ||
+          cell._t == SIGNAL_RIGHT_RED || cell._t == SIGNAL_UP_RED)
+        entity._speed = 0;
+      else
         entity.move(dir);
-        else{
-          entity._speed = 0;
-        }
-
     }
     entity.draw(pause);
   }
@@ -45,9 +72,7 @@ void board_t::draw_board(u8 &pause) {
   draw_cells(pause);
   draw_entities(pause);
 }
-cell_t &board_t::at(u32 y, u32 x) { return boardBG.at(y).at(x); }
-const u32 static tableWidth = screenWidth / cellSizeX;
-const u32 static tableHeight = screenHeight / cellSizeY;
+cell_t &board_t::at(i32 y, i32 x) { return boardBG.at(y).at(x); }
 namespace std {
 template <> struct hash<Vector2> {
   size_t operator()(Vector2 const &v) const noexcept {
@@ -79,14 +104,14 @@ board_t::board_t() {
     return;
   }
   std::string line;
-  u32 i = 0;
+  i32 i = 0;
   while (std::getline(file, line)) {
     std::vector<cell_t> row;
-    u32 idx = 0;
-    u32 j = 0;
+    i32 idx = 0;
+    i32 j = 0;
     for (auto &c : line) {
       row.push_back(cell_t(j, i));
-      row.at(idx).set(c-70);
+      row.at(idx).set(c - 70);
       j += cellSizeX;
       idx++;
     }
@@ -97,10 +122,10 @@ board_t::board_t() {
 bool board_t::cant_move(i32 x, i32 y, Vector2 prev) {
   if (x < 0 || y < 0 || x >= tableWidth || y >= tableHeight)
     return 1;
-  if (at(y,x)._t == BASE_ROAD)
+  if (at(y, x)._t == BASE_ROAD)
     return 1;
   i32 movX = x - prev.x, movY = y - prev.y;
-  auto type = at(prev.y,prev.x)._c;
+  auto type = at(prev.y, prev.x)._c;
   if (type == ROAD_CROSS)
     return 0;
   if (movX == 0 && movY == 1) {
@@ -144,8 +169,7 @@ void board_t::bfs(std::vector<u8> &table, Vector2 &end, Vector2 &start,
   std::queue<Vector2> paths;
   std::unordered_map<Vector2, Vector2> parents;
   paths.push(start);
-  Vector2 diffs[] = {
-      {1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+  Vector2 diffs[] = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
   while (!paths.empty()) {
     auto curr = paths.front();
     if (curr.x == end.x && curr.y == end.y) {
@@ -161,10 +185,10 @@ void board_t::bfs(std::vector<u8> &table, Vector2 &end, Vector2 &start,
     for (auto [x, y] : diffs) {
       float nx = curr.x + x;
       float ny = curr.y + y;
-      if (table.at(nx + ny * tableWidth) || cant_move((i32)nx, (i32)ny, curr))
+      if (table.at((i32)nx + (i32)ny * tableWidth) || cant_move((i32)nx, (i32)ny, curr))
         continue;
       parents[{nx, ny}] = curr;
-      table.at(nx + ny * tableWidth) = 1;
+      table.at((i32)nx + (i32)ny * tableWidth) = 1;
       paths.push({nx, ny});
     }
   }

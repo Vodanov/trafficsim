@@ -10,6 +10,8 @@ const static u32 screenWidth = 1280;
 const static u32 screenHeight = 720;
 const static u32 cellSizeX = 10;
 const static u32 cellSizeY = 10;
+const u32 static tableWidth = screenWidth / cellSizeX;
+const u32 static tableHeight = screenHeight / cellSizeY;
 enum TileTypes {
   BASE_ROAD,
   

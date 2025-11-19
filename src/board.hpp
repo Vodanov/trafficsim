@@ -1,22 +1,17 @@
 #include "cell.hpp"
 #include "definitions.hpp"
 #include "entity.hpp"
-#include <fstream>
-#include <iostream>
-#include <memory>
 #include <raylib.h>
 #include <stack>
-#include <string>
 #include <vector>
 class board_t {
 public:
-  cell_t &at(u32 idx, u32 idx2);
+  cell_t &at(i32 idx, i32 idx2);
   void create_entity(float x, float y, Color col, Vector2 dest);
   void draw_board(u8 &pause);
   void size();
   board_t();
   ~board_t();
-
 private:
   void bfs(std::vector<u8> &table, Vector2 &end, Vector2 &start,
            std::stack<Vector2> &path);
