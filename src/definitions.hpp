@@ -47,7 +47,3 @@ enum TileTypes {
   SIGNAL_DOWN_GREEN,
   SIGNAL_LEFT_GREEN,
 };
-
-// std::unordered_map<TileTypes, Texture2D> texures{
-  
-// };

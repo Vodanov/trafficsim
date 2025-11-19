@@ -12,8 +12,20 @@ void entity_t::get_id() {
   id = __counter;
   __counter++;
 }
-void entity_t::draw(u8& pause) {
-  if(!pause) move();
+void entity_t::draw(u8 &pause) {
+  if (!pause)
+    move();
   for (auto &pos : _positions)
     DrawRectangle(pos.x, pos.y, cellSizeX, cellSizeY, _col);
+}
+entity_t::entity_t(u16 x, u16 y, Color col) {
+  _positions.front().x = x * cellSizeX;
+  _positions.front().y = y * cellSizeY;
+  _col = col;
+  get_id();
+}
+entity_t::entity_t(u16 x, u16 y) {
+  _positions.front().x = x * cellSizeX;
+  _positions.front().y = y * cellSizeY;
+  get_id();
 }

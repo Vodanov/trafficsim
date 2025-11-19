@@ -83,7 +83,7 @@ void cell_t::set() {
   }
   _col = typeToColor[_t];
 }
-
+cell_t::cell_t(u32 posX, u32 posY) : _x(posX), _y(posY){ set(_c); }
 void cell_t::move(u8 dir) {}
 char cell_t::info() { return _c; }
 void cell_t::draw(double time, u8 &pause) {

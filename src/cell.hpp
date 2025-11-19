@@ -10,7 +10,7 @@ public:
   void move(u8 dir);
   char info();
   void draw(double time, u8& pause);
-  cell_t(u32 posX, u32 posY) : _x(posX), _y(posY) { set(_c); }
+  cell_t(u32 posX, u32 posY);
   u16 _x, _y;
   Color _col{0, 0, 0, 255};
   u8 _c{0};

@@ -15,20 +15,11 @@ public:
   time_t _time;
   u8 _dir{0}, _madness{0}, _type{0};
   float _speed{40.0f};
-  void draw(u8& pause);
+  void draw(u8 &pause);
   void move();
   entity_t() { get_id(); }
-  entity_t(u16 x, u16 y) {
-    _positions.front().x = x * cellSizeX;
-    _positions.front().y = y * cellSizeY;
-    get_id();
-  }
-  entity_t(u16 x, u16 y, Color col) {
-    _positions.front().x = x * cellSizeX;
-    _positions.front().y = y * cellSizeY;
-    _col = col;
-    get_id();
-  }
+  entity_t(u16 x, u16 y);
+  entity_t(u16 x, u16 y, Color col);
 
 private:
   u16 id;
