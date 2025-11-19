@@ -1,10 +1,53 @@
 #pragma once
 #include <cstdint>
+#include <raylib.h>
+#include <unordered_map>
 #define u32 uint32_t
 #define i32 int32_t
 #define u16 uint16_t
 #define u8 uint8_t
-const static uint32_t screenWidth = 1280;
-const static uint32_t screenHeight = 720;
-const static uint32_t cellSizeX = 10;
-const static uint32_t cellSizeY = 10;
+const static u32 screenWidth = 1280;
+const static u32 screenHeight = 720;
+const static u32 cellSizeX = 10;
+const static u32 cellSizeY = 10;
+enum TileTypes {
+  BASE_ROAD,
+  
+  ROAD_UP,
+  ROAD_RIGHT, 
+  ROAD_DOWN,
+  ROAD_LEFT,
+  
+  ROAD_UP_DOWN,
+  ROAD_LEFT_RIGHT,
+  ROAD_LEFT_UP,
+  ROAD_RIGHT_UP,
+  ROAD_LEFT_DOWN, 
+  ROAD_RIGHT_DOWN,
+
+  ROAD_UP_LEFT_RIGHT,
+  ROAD_UP_LEFT_DOWN,
+  ROAD_UP_RIGHT_DOWN, 
+  ROAD_LEFT_DOWN_RIGHT,
+  
+  ROAD_CROSS,
+
+  GRASS,
+  BUILDING,
+  SIGNAL_UP_RED,
+  SIGNAL_RIGHT_RED,
+  SIGNAL_DOWN_RED,
+  SIGNAL_LEFT_RED,
+  SIGNAL_UP_YELLOW,
+  SIGNAL_RIGHT_YELLOW,
+  SIGNAL_DOWN_YELLOW,
+  SIGNAL_LEFT_YELLOW,
+  SIGNAL_UP_GREEN,
+  SIGNAL_RIGHT_GREEN,
+  SIGNAL_DOWN_GREEN,
+  SIGNAL_LEFT_GREEN,
+};
+
+// std::unordered_map<TileTypes, Texture2D> texures{
+  
+// };

@@ -1,12 +1,7 @@
-/*
-    _c -> type of terrain
-    0 -> road
-    1 -> pedestrian
-    2 -> building
-    3 -> stop signal
-*/
 #include "definitions.hpp"
+#include <ctime>
 #include <raylib.h>
+
 class cell_t {
 public:
   void set(u8 i);
@@ -14,9 +9,11 @@ public:
   void set();
   void move(u8 dir);
   char info();
-  void draw();
-  cell_t(u32 posX, u32 posY) : _x(posX), _y(posY) {}
+  void draw(double time, u8& pause);
+  cell_t(u32 posX, u32 posY) : _x(posX), _y(posY) { set(_c); }
   u16 _x, _y;
   Color _col{0, 0, 0, 255};
   u8 _c{0};
+  u8 _t{BASE_ROAD};
+  double _time{0};
 };
