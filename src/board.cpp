@@ -1,38 +1,37 @@
 #include "board.hpp"
 #include "definitions.hpp"
+#include <fstream>
 #include <iostream>
 #include <print>
 #include <queue>
 #include <raylib.h>
 #include <stack>
+#include <string>
 #include <unordered_map>
 #include <vector>
-#include <fstream>
-#include <iostream>
-#include <string>
 std::unordered_map<u8, u8> tileToValue{{BASE_ROAD, 0},
-                                     {ROAD_UP, 1},
-                                     {ROAD_DOWN, 2},
-                                     {ROAD_LEFT, 1},
-                                     {ROAD_LEFT_DOWN, 1},
-                                     {ROAD_LEFT_UP, 1},
-                                     {ROAD_RIGHT_DOWN, 1},
-                                     {ROAD_RIGHT_UP, 1},
-                                     {ROAD_CROSS, 1},
-                                     {GRASS, 0},
-                                     {BUILDING, 0},
-                                     {SIGNAL_UP_RED, 1},
-                                     {SIGNAL_RIGHT_RED, 1},
-                                     {SIGNAL_DOWN_RED, 1},
-                                     {SIGNAL_LEFT_RED, 1},
-                                     {SIGNAL_UP_YELLOW, 1},
-                                     {SIGNAL_RIGHT_YELLOW, 1},
-                                     {SIGNAL_DOWN_YELLOW, 1},
-                                     {SIGNAL_LEFT_YELLOW, 1},
-                                     {SIGNAL_UP_GREEN, 1},
-                                     {SIGNAL_RIGHT_GREEN, 1},
-                                     {SIGNAL_DOWN_GREEN, 1},
-                                     {SIGNAL_LEFT_GREEN, 1}};
+                                       {ROAD_UP, 1},
+                                       {ROAD_DOWN, 2},
+                                       {ROAD_LEFT, 1},
+                                       {ROAD_LEFT_DOWN, 1},
+                                       {ROAD_LEFT_UP, 1},
+                                       {ROAD_RIGHT_DOWN, 1},
+                                       {ROAD_RIGHT_UP, 1},
+                                       {ROAD_CROSS, 1},
+                                       {GRASS, 0},
+                                       {BUILDING, 0},
+                                       {SIGNAL_UP_RED, 1},
+                                       {SIGNAL_RIGHT_RED, 1},
+                                       {SIGNAL_DOWN_RED, 1},
+                                       {SIGNAL_LEFT_RED, 1},
+                                       {SIGNAL_UP_YELLOW, 1},
+                                       {SIGNAL_RIGHT_YELLOW, 1},
+                                       {SIGNAL_DOWN_YELLOW, 1},
+                                       {SIGNAL_LEFT_YELLOW, 1},
+                                       {SIGNAL_UP_GREEN, 1},
+                                       {SIGNAL_RIGHT_GREEN, 1},
+                                       {SIGNAL_DOWN_GREEN, 1},
+                                       {SIGNAL_LEFT_GREEN, 1}};
 void board_t::size() {
   std::cout << boardBG.size() << ' ' << boardBG.front().size() << '\n';
 }
@@ -59,8 +58,53 @@ void board_t::draw_entities(u8 &pause) {
            ny = nextPos.y - entity._positions.front().y;
       u8 dir = (nx >= 1) ? 1 : (nx <= -1) ? 2 : (ny >= 1) ? 3 : 4;
       auto &cell = at(nextPos.y, nextPos.x);
+      std::vector<Vector2> relative_positions;
+      switch (dir) {
+      case 1:
+        relative_positions = {
+            {nextPos.x + 1, nextPos.y + 0},
+            {nextPos.x + 0, nextPos.y + 1},
+            {nextPos.x + 0, nextPos.y - 1}
+        };
+        break;
+      case 2:
+        relative_positions = {
+            {nextPos.x - 1, nextPos.y + 0},
+            {nextPos.x + 0, nextPos.y + 1},
+            {nextPos.x + 0, nextPos.y - 1}
+        };
+        break;
+      case 3:
+        relative_positions = {
+            {nextPos.x + 0, nextPos.y + 1},
+            {nextPos.x + 1, nextPos.y + 0},
+            {nextPos.x - 1, nextPos.y + 0}
+        };
+        break;
+      case 4:
+        relative_positions = {
+            {nextPos.x + 0, nextPos.y - 1},
+            {nextPos.x + 1, nextPos.y + 0},
+            {nextPos.x - 1, nextPos.y + 0}
+        };
+        break;
+      }
+      bool entityBlocking = 0;
+      for (auto &other_entity : entities) {
+        for (auto &relative_pos : relative_positions) {
+          if (other_entity._positions.front().x == relative_pos.x &&
+              other_entity._positions.front().y == relative_pos.y) {
+            entityBlocking = 1;
+            break;
+          }
+        }
+        if (entityBlocking)
+          break;
+      }
+
       if (cell._t == SIGNAL_DOWN_RED || cell._t == SIGNAL_LEFT_RED ||
-          cell._t == SIGNAL_RIGHT_RED || cell._t == SIGNAL_UP_RED)
+          cell._t == SIGNAL_RIGHT_RED || cell._t == SIGNAL_UP_RED ||
+          entityBlocking)
         entity._speed = 0;
       else
         entity.move(dir);
@@ -185,7 +229,8 @@ void board_t::bfs(std::vector<u8> &table, Vector2 &end, Vector2 &start,
     for (auto [x, y] : diffs) {
       float nx = curr.x + x;
       float ny = curr.y + y;
-      if (table.at((i32)nx + (i32)ny * tableWidth) || cant_move((i32)nx, (i32)ny, curr))
+      if (table.at((i32)nx + (i32)ny * tableWidth) ||
+          cant_move((i32)nx, (i32)ny, curr))
         continue;
       parents[{nx, ny}] = curr;
       table.at((i32)nx + (i32)ny * tableWidth) = 1;

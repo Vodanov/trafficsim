@@ -1,17 +1,17 @@
 #pragma once
 #include <cstdint>
 #include <raylib.h>
-#include <unordered_map>
 #define u32 uint32_t
 #define i32 int32_t
 #define u16 uint16_t
 #define u8 uint8_t
-const static u32 screenWidth = 1280;
-const static u32 screenHeight = 720;
-const static u32 cellSizeX = 10;
-const static u32 cellSizeY = 10;
-const u32 static tableWidth = screenWidth / cellSizeX;
-const u32 static tableHeight = screenHeight / cellSizeY;
+constexpr const static double SIGNAL_TIME = 0.5;
+constexpr const static u32 screenWidth = 1280;
+constexpr const static u32 screenHeight = 720;
+constexpr const static u32 cellSizeX = 10;
+constexpr const static u32 cellSizeY = 10;
+constexpr const u32 static tableWidth = screenWidth / cellSizeX;
+constexpr const u32 static tableHeight = screenHeight / cellSizeY;
 enum TileTypes {
   BASE_ROAD,
   

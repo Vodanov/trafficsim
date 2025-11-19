@@ -1,6 +1,7 @@
 #include "board.hpp"
 #include "definitions.hpp"
 #include <iostream>
+#include <math.h>
 #include <raylib.h>
 void check_inputs(u8 &type) {
   bool w = IsKeyDown(KEY_W);
@@ -120,11 +121,19 @@ int main() {
   u8 type = BASE_ROAD, pause = 1;
   board_t board;
   board.size();
-  std::clock_t curr = std::clock();
+  Camera2D camera = {0};
+  camera.zoom = 1.0f;
   SetTargetFPS(60);
   type = 0;
   while (!WindowShouldClose()) {
+    camera.zoom = expf(logf(camera.zoom) + ((float)GetMouseWheelMove() * 0.1f));
+
+    if (camera.zoom > 3.0f)
+      camera.zoom = 3.0f;
+    else if (camera.zoom < 0.1f)
+      camera.zoom = 0.1f;
     BeginDrawing();
+    BeginMode2D(camera);
     ClearBackground({0, 0, 0, 255});
     if (IsKeyPressed(KEY_SPACE))
       pause = !pause;
@@ -132,25 +141,19 @@ int main() {
     Vector2 mousePos = GetMousePosition();
     u32 cellX = mousePos.x / cellSizeX;
     u32 cellY = mousePos.y / cellSizeX;
+    if (IsKeyPressed(KEY_R))
+      camera.zoom = 1.0f;
     check_inputs(type);
-    if (cellX <= screenWidth / cellSizeX && cellY <= screenHeight / cellSizeY) {
+    if (cellX <= screenWidth / cellSizeX - 1 &&
+        cellY <= screenHeight / cellSizeY - 1 && camera.zoom == 1.0f) {
       if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
         board.at(cellY, cellX).set(type);
         std::cout << "[CELL] y:" << cellY << " x:" << cellX
                   << " type:" << (char)type + 80 << '\n';
       }
-      if (IsMouseButtonDown(MOUSE_RIGHT_BUTTON)) {
-        board.create_entity(cellX, cellY, {255, 0, 0, 255}, {0, 0});
-        std::cout << "[Entity] -> " << cellY << ' ' << cellX << '\n';
-      }
-    } else {
-      if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-        board.at(cellY, cellX).set();
-        std::cout << "[CELL] -> " << cellX << ' ' << cellY << '\n';
-      }
       if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON)) {
         board.create_entity(cellX, cellY, {255, 0, 0, 255}, {0, 0});
-        std::cout << "[Entity] -> " << cellX << ' ' << cellY << '\n';
+        std::cout << "[Entity] -> " << cellY << ' ' << cellX << '\n';
       }
     }
     EndDrawing();

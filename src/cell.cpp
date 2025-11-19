@@ -1,6 +1,7 @@
 #include "cell.hpp"
 #include "definitions.hpp"
 #include <raylib.h>
+#include <unordered_map>
 std::unordered_map<u8, Color> typeToColor = {
     {BASE_ROAD, {0, 0, 0, 255}},
     {ROAD_UP, {100, 100, 100, 255}},
@@ -32,6 +33,9 @@ std::unordered_map<u8, Color> typeToColor = {
     {SIGNAL_RIGHT_GREEN, {0, 255, 0, 255}},
     {SIGNAL_DOWN_GREEN, {0, 255, 0, 255}},
     {SIGNAL_LEFT_GREEN, {0, 255, 0, 255}}
+};
+std::unordered_map<u8, Texture2D> textureMap{
+
 };
 void cell_t::set(u8 i) {
   _t = i;
