@@ -11,6 +11,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include "operators.hpp"
 namespace std {
 template <> struct hash<Vector2> {
   size_t operator()(Vector2 const &v) const noexcept {
@@ -18,21 +19,6 @@ template <> struct hash<Vector2> {
   }
 };
 } // namespace std
-bool operator==(const Vector2 &a, const Vector2 &b) {
-  return a.x == b.x && a.y == b.y;
-}
-bool operator!=(const Vector2 &a, const Vector2 &b) {
-  return a.x != b.x || a.y != b.y;
-}
-bool operator<(const Vector2 &a, const Vector2 &b) {
-  return (a.x < b.x || (a.x == b.x && a.y < b.y));
-}
-Vector2 operator-(const Vector2 &a, const Vector2 &b) {
-  return {a.x - b.x, a.y - b.y};
-}
-Vector2 operator+(const Vector2 &a, const Vector2 &b) {
-  return {a.x + b.x, a.y + b.y};
-}
 std::unordered_map<u8, u8> tileToValue{{BASE_ROAD, NOWHERE},
                                        {ROAD_UP, UP},
                                        {ROAD_DOWN, DOWN},

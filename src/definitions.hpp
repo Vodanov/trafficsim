@@ -5,6 +5,7 @@
 #define i32 int32_t
 #define u16 uint16_t
 #define u8 uint8_t
+constexpr const static u16 TARGET_FPS = 144;
 constexpr const static double SIGNAL_TIME = 0.5;
 constexpr const static double ENTITY_UPDATE_TIME = .03;
 constexpr const static u32 screenWidth = 1280;
