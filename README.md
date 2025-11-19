@@ -12,7 +12,9 @@ A small program that uses **Raylib** to simulate city traffic.
 Create a folder named `build` and run:
 
 ```bash
+mkdir build
 cd build/
 cmake ..
 make
+./src/trafficSim
 ```
