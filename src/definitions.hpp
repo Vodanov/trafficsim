@@ -12,7 +12,7 @@ constexpr const static u32 screenWidth = 1280;
 constexpr const static u32 screenHeight = 720;
 constexpr const static u32 boardWidth = 4000;
 constexpr const static u32 boardHeight = 4000;
-
+constexpr const static double ENTITY_TIMEOUT = 1;
 constexpr const static u32 cellSizeX = 10;
 constexpr const static u32 cellSizeY = 10;
 constexpr const u32 static tableWidth = boardWidth / cellSizeX;

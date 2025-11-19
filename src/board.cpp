@@ -1,5 +1,6 @@
 #include "board.hpp"
 #include "definitions.hpp"
+#include "operators.hpp"
 #include "visible_area.hpp"
 #include <fstream>
 #include <iostream>
@@ -11,7 +12,6 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include "operators.hpp"
 namespace std {
 template <> struct hash<Vector2> {
   size_t operator()(Vector2 const &v) const noexcept {
@@ -19,29 +19,37 @@ template <> struct hash<Vector2> {
   }
 };
 } // namespace std
-std::unordered_map<u8, u8> tileToValue{{BASE_ROAD, NOWHERE},
-                                       {ROAD_UP, UP},
-                                       {ROAD_DOWN, DOWN},
-                                       {ROAD_LEFT, LEFT},
-                                       {ROAD_LEFT_DOWN, DOWN},
-                                       {ROAD_LEFT_UP, UP},
-                                       {ROAD_RIGHT_DOWN, DOWN},
-                                       {ROAD_RIGHT_UP, UP},
-                                       {ROAD_CROSS, NOWHERE},
-                                       {GRASS, NOWHERE},
-                                       {BUILDING, NOWHERE},
-                                       {SIGNAL_UP_RED, UP},
-                                       {SIGNAL_RIGHT_RED, RIGHT},
-                                       {SIGNAL_DOWN_RED, DOWN},
-                                       {SIGNAL_LEFT_RED, LEFT},
-                                       {SIGNAL_UP_YELLOW, UP},
-                                       {SIGNAL_RIGHT_YELLOW, RIGHT},
-                                       {SIGNAL_DOWN_YELLOW, DOWN},
-                                       {SIGNAL_LEFT_YELLOW, LEFT},
-                                       {SIGNAL_UP_GREEN, LEFT},
-                                       {SIGNAL_RIGHT_GREEN, RIGHT},
-                                       {SIGNAL_DOWN_GREEN, RIGHT},
-                                       {SIGNAL_LEFT_GREEN, LEFT}};
+std::unordered_map<u8, u8> tileToValue{
+    {BASE_ROAD, NOWHERE},
+    {ROAD_UP, UP},
+    {ROAD_RIGHT, RIGHT},
+    {ROAD_DOWN, DOWN},
+    {ROAD_LEFT, LEFT},
+    {ROAD_UP_DOWN, UP | DOWN},
+    {ROAD_LEFT_RIGHT, LEFT | RIGHT},
+    {ROAD_LEFT_UP, LEFT | UP},
+    {ROAD_RIGHT_UP, RIGHT | UP},
+    {ROAD_LEFT_DOWN, LEFT | DOWN},
+    {ROAD_RIGHT_DOWN, RIGHT | DOWN},
+    {ROAD_UP_LEFT_RIGHT, UP | LEFT | RIGHT},
+    {ROAD_UP_LEFT_DOWN, UP | LEFT | DOWN},
+    {ROAD_UP_RIGHT_DOWN, UP | RIGHT | DOWN},
+    {ROAD_LEFT_DOWN_RIGHT, LEFT | DOWN | RIGHT},
+    {ROAD_CROSS, UP | DOWN | LEFT | RIGHT},
+    {GRASS, NOWHERE},
+    {BUILDING, NOWHERE},
+    {SIGNAL_UP_RED, UP},
+    {SIGNAL_RIGHT_RED, RIGHT},
+    {SIGNAL_DOWN_RED, DOWN},
+    {SIGNAL_LEFT_RED, LEFT},
+    {SIGNAL_UP_YELLOW, UP},
+    {SIGNAL_RIGHT_YELLOW, RIGHT},
+    {SIGNAL_DOWN_YELLOW, DOWN},
+    {SIGNAL_LEFT_YELLOW, LEFT},
+    {SIGNAL_UP_GREEN, UP},
+    {SIGNAL_RIGHT_GREEN, RIGHT},
+    {SIGNAL_DOWN_GREEN, DOWN},
+    {SIGNAL_LEFT_GREEN, LEFT}};
 static const std::unordered_map<u8, std::set<Vector2>> allowedMovements = {
     {ROAD_UP, {{0, -1}}},
     {ROAD_DOWN, {{0, 1}}},
@@ -61,8 +69,6 @@ static const std::unordered_map<u8, std::set<Vector2>> allowedMovements = {
     {ROAD_UP_RIGHT_DOWN, {{0, -1}, {1, 0}, {0, 1}}},
     {ROAD_LEFT_DOWN_RIGHT, {{-1, 0}, {0, 1}, {1, 0}}},
 
-    {ROAD_CROSS, {{0, 1}, {0, -1}, {1, 0}, {-1, 0}}},
-
     {SIGNAL_DOWN_RED, {{0, 1}}},
     {SIGNAL_DOWN_YELLOW, {{0, 1}}},
     {SIGNAL_DOWN_GREEN, {{0, 1}}},
@@ -79,6 +85,10 @@ static const std::unordered_map<u8, std::set<Vector2>> allowedMovements = {
     {SIGNAL_LEFT_YELLOW, {{-1, 0}}},
     {SIGNAL_LEFT_GREEN, {{-1, 0}}},
 };
+void board_t::create_desitation(float x, float y) {
+  at(y, x)._col.r += 200;
+  _destinations.push_back({x, y});
+}
 void board_t::size() {
   std::cout << boardBG.size() << ' ' << boardBG.front().size() << '\n';
 }
@@ -89,19 +99,34 @@ void board_t::draw_cells(u8 &pause, VisibleArea area) {
 
       at(i, j).draw(time, pause);
 }
-void board_t::create_entity(float x, float y, Color col, Vector2 dest) {
-  if (tileToValue[at((i32)y, (i32)x)._c] == 0)
-    return;
+void board_t::create_entity(float x, float y, Color col) {
   entity_t new_ent(x, y, col);
+  Vector2 dest = _destinations[GetRandomValue(0, _destinations.size() - 1)];
+  new_ent._dest = dest;
   std::stack<Vector2> paths = find_path({x, y}, dest);
   new_ent._path = std::move(paths);
   entities.push_back(new_ent);
 }
 void board_t::draw_entities(u8 &pause) {
   for (auto &entity : entities) {
-    Vector2 nextPos = entity.next_pos(), nextNextPos = entity.next_next_pos();
-    if (nextPos.x == entity._dest.x && nextPos.y == entity._dest.y)
+    if (entity._positions.front().x == -99) {
+      std::cout << "Checking arrived entity\n";
+      if (GetTime() - entity._time >= ENTITY_TIMEOUT) {
+        std::cout << "Timeout is over ";
+        entity._positions.front() = entity._start;
+        std::cout << "searching\n";
+        entity._path = find_path(entity._start, entity._dest);
+      }
       continue;
+    }
+    Vector2 nextPos = entity.next_pos(), nextNextPos = entity.next_next_pos();
+    if (nextPos.x == entity._dest.x && nextPos.y == entity._dest.y) {
+      std::swap(entity._dest, entity._start);
+      entity._positions.front().x = -99;
+      entity._positions.front().y = -99;
+      entity._time = GetTime();
+      continue;
+    }
     if (!pause && GetTime() - entity._time >= ENTITY_UPDATE_TIME) {
       auto nx = nextPos.x - entity._positions.front().x,
            ny = nextPos.y - entity._positions.front().y;
@@ -191,9 +216,9 @@ board_t::board_t() {
 }
 bool board_t::cant_move(i32 x, i32 y, Vector2 prev) {
   if (at(y, x)._t == BASE_ROAD) {
-    return true;
-  }
-
+    return 1;
+  } else if (at(y, x)._t == ROAD_CROSS || at(prev.y,prev.x)._t == ROAD_CROSS)
+    return 0;
   float movX = x - prev.x;
   float movY = y - prev.y;
   u8 type = at(prev.y, prev.x)._c;
@@ -211,6 +236,7 @@ void board_t::bfs(std::vector<u8> &table, Vector2 &end, Vector2 &start,
   paths.push(start);
   Vector2 diffs[] = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
   while (!paths.empty()) {
+    BeginDrawing();
     auto curr = paths.front();
     if (curr.x == end.x && curr.y == end.y) {
       path.push(end);
@@ -230,10 +256,12 @@ void board_t::bfs(std::vector<u8> &table, Vector2 &end, Vector2 &start,
         continue;
       if (table.at(nx + ny * tableWidth) || cant_move((i32)nx, (i32)ny, curr))
         continue;
+      DrawRectangle(nx * 10, ny * 10, 10, 10, {0,0,255,255});
       parents[{nx, ny}] = curr;
       table.at((i32)nx + (i32)ny * tableWidth) = 1;
       paths.push({nx, ny});
     }
+    EndDrawing();
   }
 }
 std::stack<Vector2> board_t::find_path(Vector2 start, Vector2 end) {

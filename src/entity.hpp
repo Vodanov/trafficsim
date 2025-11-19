@@ -7,7 +7,7 @@ class entity_t {
 public:
   std::vector<Vector2> _positions{{0, 0}};
   std::stack<Vector2> _path;
-  Vector2 _dest{0, 0};
+  Vector2 _dest{0, 0}, _start;
   Color _col{0, 0, 0, 0};
   double _time{0};
   u8 _dir{0};

@@ -48,11 +48,13 @@ void entity_t::draw(u8 &pause) {
                   cellSizeY, _col);
 }
 entity_t::entity_t(u16 x, u16 y, Color col) {
+  _start = {(float)x,(float)y};
   _positions.front().x = x;
   _positions.front().y = y;
   _col = col;
 }
-entity_t::entity_t(u16 x, u16 y) {
+entity_t::entity_t(u16 x, u16 y){
+  _start = {(float)x,(float)y};
   _positions.front().x = x;
   _positions.front().y = y;
 }
