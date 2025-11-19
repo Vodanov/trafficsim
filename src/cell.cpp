@@ -35,7 +35,8 @@ std::unordered_map<u8, Color> typeToColor = {
     {SIGNAL_LEFT_GREEN, {0, 255, 0, 255}}
 };
 std::unordered_map<u8, Texture2D> textureMap{
-
+  {GRASS,LoadTexture("/textures/grass.png")},
+  {0,LoadTexture("/textures/empty.png")}
 };
 void cell_t::set(u8 i) {
   _t = i;
@@ -95,10 +96,10 @@ void cell_t::draw(double time, u8 &pause) {
     DrawRectangle(_x, _y, cellSizeX, cellSizeY, _col);
     return;
   }
-  if (time - _time >= 5 && (_t >= 18 && _t <= 29)) {
+  if (time - _time >= SIGNAL_TIME && (_t >= 18 && _t <= 29)) {
     set();
     _time = time;
   }
-  // DrawTexture(Texture2D texture, int posX, int posY, Color tint)
+  //DrawTexture(textureMap[_t], _x, _y, {0,0,0,0});
   DrawRectangle(_x, _y, cellSizeX, cellSizeY, _col);
 }

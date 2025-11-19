@@ -3,6 +3,8 @@
 #include <iostream>
 #include <math.h>
 #include <raylib.h>
+#include <print>
+#include "visible_area.hpp"
 void check_inputs(u8 &type) {
   bool w = IsKeyDown(KEY_W);
   bool a = IsKeyDown(KEY_A);
@@ -118,16 +120,21 @@ void check_inputs(u8 &type) {
 }
 int main() {
   InitWindow(screenWidth, screenHeight, "Traffic sim");
+  SetWindowState(FLAG_WINDOW_RESIZABLE);
   u8 type = BASE_ROAD, pause = 1;
   board_t board;
   board.size();
   Camera2D camera = {0};
   camera.zoom = 1.0f;
-  SetTargetFPS(60);
+  SetTargetFPS(144);
   type = 0;
   while (!WindowShouldClose()) {
     camera.zoom = expf(logf(camera.zoom) + ((float)GetMouseWheelMove() * 0.1f));
-
+    if(IsKeyDown(KEY_UP))camera.offset.y += cellSizeY / camera.zoom / 2;
+    if(IsKeyDown(KEY_RIGHT))camera.offset.x-= cellSizeX / camera.zoom / 2;
+    if(IsKeyDown(KEY_DOWN))camera.offset.y-= cellSizeY / camera.zoom / 2;
+    if(IsKeyDown(KEY_LEFT))camera.offset.x+= cellSizeX / camera.zoom / 2;
+    //std::print("{} {}\n", camera.offset.x / cellSizeX, camera.offset.y / cellSizeX);
     if (camera.zoom > 3.0f)
       camera.zoom = 3.0f;
     else if (camera.zoom < 0.1f)
@@ -137,23 +144,20 @@ int main() {
     ClearBackground({0, 0, 0, 255});
     if (IsKeyPressed(KEY_SPACE))
       pause = !pause;
-    board.draw_board(pause);
+    board.draw_board(pause, VisibleArea(camera));
     Vector2 mousePos = GetMousePosition();
-    u32 cellX = mousePos.x / cellSizeX;
-    u32 cellY = mousePos.y / cellSizeX;
+    u32 cellX = (mousePos.x / cellSizeX - camera.offset.x / cellSizeX) / camera.zoom;
+    u32 cellY = (mousePos.y / cellSizeX - camera.offset.y / cellSizeY) / camera.zoom;
     if (IsKeyPressed(KEY_R))
       camera.zoom = 1.0f;
     check_inputs(type);
-    if (cellX <= screenWidth / cellSizeX - 1 &&
-        cellY <= screenHeight / cellSizeY - 1 && camera.zoom == 1.0f) {
+    if (cellX <= boardWidth / cellSizeX - 1 &&
+        cellY <= boardHeight / cellSizeY - 1) {
       if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
         board.at(cellY, cellX).set(type);
-        std::cout << "[CELL] y:" << cellY << " x:" << cellX
-                  << " type:" << (char)type + 80 << '\n';
       }
       if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON)) {
         board.create_entity(cellX, cellY, {255, 0, 0, 255}, {0, 0});
-        std::cout << "[Entity] -> " << cellY << ' ' << cellX << '\n';
       }
     }
     EndDrawing();

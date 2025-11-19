@@ -4,7 +4,7 @@
 void entity_t::move(u8 &dir) {
   if (_speed <= _maxSpeed)
     _speed += _acceleration;
-  if(dir != _dir){
+  if (dir != _dir) {
     _dir = dir;
     _speed /= 2;
   }
@@ -27,14 +27,25 @@ void entity_t::move(u8 &dir) {
     _positions.front().x = _path.top().x;
     _positions.front().y = _path.top().y;
     _path.pop();
-    _relative_position = {0,0};
+    _relative_position = {0, 0};
   }
 }
 Vector2 entity_t::next_pos() { return {_path.top().x, _path.top().y}; }
+Vector2 entity_t::next_next_pos() {
+  if (_path.empty())
+    return {};
+  Vector2 tmp = _path.top(), res = {};
+  _path.pop();
+  if (!_path.empty())
+    res = _path.top();
+  _path.push(tmp);
+  return res;
+}
 void entity_t::draw(u8 &pause) {
   for (auto &pos : _positions)
-    DrawRectangle((pos.x + _relative_position.x) * cellSizeX, (pos.y + _relative_position.y) * cellSizeX, cellSizeX, cellSizeY,
-                  _col);
+    DrawRectangle((pos.x + _relative_position.x) * cellSizeX,
+                  (pos.y + _relative_position.y) * cellSizeX, cellSizeX,
+                  cellSizeY, _col);
 }
 entity_t::entity_t(u16 x, u16 y, Color col) {
   _positions.front().x = x;

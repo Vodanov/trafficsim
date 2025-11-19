@@ -6,13 +6,24 @@
 #define u16 uint16_t
 #define u8 uint8_t
 constexpr const static double SIGNAL_TIME = 0.5;
+constexpr const static double ENTITY_UPDATE_TIME = .03;
 constexpr const static u32 screenWidth = 1280;
 constexpr const static u32 screenHeight = 720;
+constexpr const static u32 boardWidth = 4000;
+constexpr const static u32 boardHeight = 4000;
+
 constexpr const static u32 cellSizeX = 10;
 constexpr const static u32 cellSizeY = 10;
-constexpr const u32 static tableWidth = screenWidth / cellSizeX;
-constexpr const u32 static tableHeight = screenHeight / cellSizeY;
-enum TileTypes {
+constexpr const u32 static tableWidth = boardWidth / cellSizeX;
+constexpr const u32 static tableHeight = boardHeight / cellSizeY;
+enum Direction {
+  NOWHERE,
+  UP,
+  DOWN,
+  LEFT,
+  RIGHT
+};
+enum tileType {
   BASE_ROAD,
   
   ROAD_UP,
