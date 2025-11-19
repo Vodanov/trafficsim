@@ -85,9 +85,10 @@ void cell_t::set() {
 }
 cell_t::cell_t(u32 posX, u32 posY) : _x(posX), _y(posY){ set(_c); }
 void cell_t::move(u8 dir) {}
-char cell_t::info() { return _c; }
+char cell_t::info() { return _t; }
 void cell_t::draw(double time, u8 &pause) {
   if (pause) {
+    _time = time;
     DrawRectangle(_x, _y, cellSizeX, cellSizeY, _col);
     return;
   }

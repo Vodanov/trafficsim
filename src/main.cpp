@@ -133,15 +133,15 @@ int main() {
     u32 cellX = mousePos.x / cellSizeX;
     u32 cellY = mousePos.y / cellSizeX;
     check_inputs(type);
-    if (type < 99) {
-      if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+    if (cellX <= screenWidth / cellSizeX && cellY <= screenHeight / cellSizeY) {
+      if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
         board.at(cellY, cellX).set(type);
         std::cout << "[CELL] y:" << cellY << " x:" << cellX
                   << " type:" << (char)type + 80 << '\n';
       }
-      if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON)) {
+      if (IsMouseButtonDown(MOUSE_RIGHT_BUTTON)) {
         board.create_entity(cellX, cellY, {255, 0, 0, 255}, {0, 0});
-        std::cout << "[Entity] -> " << cellX << ' ' << cellY << '\n';
+        std::cout << "[Entity] -> " << cellY << ' ' << cellX << '\n';
       }
     } else {
       if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
