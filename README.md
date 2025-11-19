@@ -1,7 +1,6 @@
 # TrafficSim
 
-A small program that uses **Raylib** to draw stuff.  
-Intended to simulate city traffic and life (eventually).
+A small program that uses **Raylib** to simulate city traffic.
 
 ## Requirements
 
