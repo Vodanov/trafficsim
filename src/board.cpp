@@ -139,10 +139,10 @@ void board_t::draw_entities(u8 &pause, double &time) {
       }
     }
     if (time - entity._time >= ENTITY_UPDATE_TIME) {
-      if (entity._positions.front().x == -99) {
+      if (entity._position.x == -99) {
         if (GetTime() - entity._time >= ENTITY_TIMEOUT &&
             !entity._path_future.valid()) {
-          entity._positions.front() = entity._start;
+          entity._position = entity._start;
           get_destination(entity);
           Vector2 start = entity._start;
           Vector2 dest = entity._dest;
@@ -159,15 +159,15 @@ void board_t::draw_entities(u8 &pause, double &time) {
       Vector2 nextPos = entity.next_pos(), nextNextPos = entity.next_next_pos();
       if (nextPos.x == entity._dest.x && nextPos.y == entity._dest.y) {
         std::swap(entity._dest, entity._start);
-        entity._positions.front().x = -99;
-        entity._positions.front().y = -99;
+        entity._position.x = -99;
+        entity._position.y = -99;
         entity._time = GetTime();
         entity._has_path = 0;
         continue;
       }
       if (!pause) {
-        auto nx = nextPos.x - entity._positions.front().x,
-             ny = nextPos.y - entity._positions.front().y;
+        auto nx = nextPos.x - entity._position.x,
+             ny = nextPos.y - entity._position.y;
         u8 dir = (nx >= 1) ? 0 : (nx <= -1) ? 1 : (ny >= 1) ? 2 : 3;
         auto &cell = at(nextPos.y, nextPos.x);
         if (cell._t == GRASS) {
@@ -177,8 +177,8 @@ void board_t::draw_entities(u8 &pause, double &time) {
         Vector2 relative_position = positions[dir];
         bool entityBlocking = 0;
         for (auto &other_entity : entities) {
-          if (other_entity._positions.front() == nextPos + relative_position ||
-              other_entity._positions.front() == nextNextPos) {
+          if (other_entity._position == nextPos + relative_position ||
+              other_entity._position == nextNextPos) {
             entityBlocking = 1;
             break;
           }
@@ -194,7 +194,7 @@ void board_t::draw_entities(u8 &pause, double &time) {
         }
       }
     }
-    entity.draw(pause);
+    entity.draw();
   }
 }
 void board_t::draw_board(u8 &pause, VisibleArea area) {

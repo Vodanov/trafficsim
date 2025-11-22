@@ -3,9 +3,6 @@
 #include <print>
 #include <raylib.h>
 void entity_t::move(u8 &dir) {
-  if (_time >= ENTITY_UPDATE_TIME)
-    if (_path.empty())
-      return;
   if (_speed <= _maxSpeed || _acceleration <= 0)
     _speed += _acceleration;
   if (dir != _dir) {
@@ -26,12 +23,30 @@ void entity_t::move(u8 &dir) {
     _relative_position.y -= _speed;
     break;
   }
-  if (_relative_position.x >= 1 || _relative_position.x <= -1 ||
-      _relative_position.y >= 1 || _relative_position.y <= -1) {
-    _positions.front().x = _path.top().x;
-    _positions.front().y = _path.top().y;
-    _path.pop();
-    _relative_position = {0,0};
+    if (_relative_position.x >= 1.0f || _relative_position.x <= -1.0f ||
+      _relative_position.y >= 1.0f || _relative_position.y <= -1.0f) {
+    float nx = 0, ny = 0;
+    
+    if (_relative_position.x >= 1.0f) {
+      nx = _relative_position.x - 1.0f;
+      _position.x = _path.top().x;
+      _path.pop();
+    } else if (_relative_position.x <= -1.0f) {
+      nx = _relative_position.x + 1.0f;
+      _position.x = _path.top().x;
+      _path.pop();
+    }
+    
+    if (_relative_position.y >= 1.0f) {
+      ny = _relative_position.y - 1.0f;
+      _position.y = _path.top().y;
+      _path.pop();
+    } else if (_relative_position.y <= -1.0f) {
+      ny = _relative_position.y + 1.0f;
+      _position.y = _path.top().y;
+      _path.pop();
+    }
+    _relative_position = {nx, ny};
   }
 }
 Vector2 entity_t::next_pos() {
@@ -40,29 +55,26 @@ Vector2 entity_t::next_pos() {
   return _path.top();
 }
 Vector2 entity_t::next_next_pos() {
-  if (_path.empty() || _path.size() == 1)
-    return {};
-  Vector2 tmp = _path.top(), res = {};
+  if (_path.size() < 2) return {};
+  Vector2 next = _path.top();
   _path.pop();
-  if (!_path.empty())
-    res = _path.top();
-  _path.push(tmp);
-  return res;
+  Vector2 result = _path.empty() ? Vector2{0, 0} : _path.top();
+  _path.push(next);
+  return result;
 }
-void entity_t::draw(u8 &pause) {
-  for (auto &pos : _positions)
-    DrawRectangle((pos.x + _relative_position.x) * cellSizeX,
-                  (pos.y + _relative_position.y) * cellSizeX, cellSizeX,
-                  cellSizeY, _col);
+void entity_t::draw() {
+  DrawRectangle((_position.x + _relative_position.x) * cellSizeX,
+                (_position.y + _relative_position.y) * cellSizeX, cellSizeX,
+                cellSizeY, _col);
 }
 entity_t::entity_t(u16 x, u16 y, Color col) {
   _start = {(float)x, (float)y};
-  _positions.front().x = x;
-  _positions.front().y = y;
+  _position.x = x;
+  _position.y = y;
   _col = col;
 }
 entity_t::entity_t(u16 x, u16 y) {
   _start = {(float)x, (float)y};
-  _positions.front().x = x;
-  _positions.front().y = y;
+  _position.x = x;
+  _position.y = y;
 }
