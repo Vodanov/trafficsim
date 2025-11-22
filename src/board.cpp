@@ -141,15 +141,13 @@ void board_t::draw_entities(u8 &pause) {
           entityBlocking = 1;
           break;
         }
-        if (entityBlocking)
-          break;
       }
-
+      dir++;
       if (cell._t == SIGNAL_DOWN_RED || cell._t == SIGNAL_LEFT_RED ||
           cell._t == SIGNAL_RIGHT_RED || cell._t == SIGNAL_UP_RED ||
-          entityBlocking)
+          entityBlocking) {
         entity._speed = 0;
-      else {
+      } else {
         entity.move(dir);
         entity._time = GetTime();
       }
@@ -236,18 +234,17 @@ void board_t::bfs(std::bitset<tableWidth * tableHeight> &table, Vector2 &end,
     }
     paths.pop();
     for (auto [x, y] : diffs) {
-      float nx = curr.x + x;
-      float ny = curr.y + y;
-      if ((i32)nx < 0 || (i32)nx > boardWidth || (i32)ny >= boardHeight ||
-          (i32)ny < 0)
+      i32 nx = curr.x + x;
+      i32 ny = curr.y + y;
+      if (nx < 0 || nx > boardWidth || ny >= boardHeight || ny < 0)
         continue;
-      if (table[nx + ny * tableWidth] || cant_move((i32)nx, (i32)ny, curr))
+      if (table[(nx + ny * tableWidth)] == 1 || cant_move(nx, ny, curr))
         continue;
-      // DrawRectangle(nx * 10, ny * 10, 10, 10, {0,0,255,255});
-      parents[{nx, ny}] = curr;
+      // DrawRectangle(nx * 10, ny * 10, 10, 10, {0, 0, 255, 255});
+      parents[{(float)nx, (float)ny}] = curr;
 
-      table[(i32)nx + (i32)ny * tableWidth] = 1;
-      paths.push({nx, ny});
+      table[(nx + ny * tableWidth)] = 1;
+      paths.push({(float)nx, (float)ny});
     }
     // EndDrawing();
   }
