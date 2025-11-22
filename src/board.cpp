@@ -2,6 +2,7 @@
 #include "definitions.hpp"
 #include "operators.hpp"
 #include "visible_area.hpp"
+#include <bitset>
 #include <fstream>
 #include <iostream>
 #include <print>
@@ -96,25 +97,24 @@ void board_t::draw_cells(u8 &pause, VisibleArea area) {
   double time = GetTime();
   for (u32 i = area.startY; i < area.endY; i++)
     for (u32 j = area.startX; j < area.endX; j++)
-
       at(i, j).draw(time, pause);
 }
 void board_t::create_entity(float x, float y, Color col) {
   entity_t new_ent(x, y, col);
-  Vector2 dest = _destinations[GetRandomValue(0, _destinations.size() - 1)];
-  new_ent._dest = dest;
-  std::stack<Vector2> paths = find_path({x, y}, dest);
+  if (!_destinations.empty()) {
+    Vector2 dest = _destinations[GetRandomValue(0, _destinations.size() - 1)];
+    new_ent._dest = dest;
+  } else
+    new_ent._dest = {0, 0};
+  std::stack<Vector2> paths = find_path({x, y}, new_ent._dest);
   new_ent._path = std::move(paths);
   entities.push_back(new_ent);
 }
 void board_t::draw_entities(u8 &pause) {
   for (auto &entity : entities) {
     if (entity._positions.front().x == -99) {
-      std::cout << "Checking arrived entity\n";
       if (GetTime() - entity._time >= ENTITY_TIMEOUT) {
-        std::cout << "Timeout is over ";
         entity._positions.front() = entity._start;
-        std::cout << "searching\n";
         entity._path = find_path(entity._start, entity._dest);
       }
       continue;
@@ -127,26 +127,13 @@ void board_t::draw_entities(u8 &pause) {
       entity._time = GetTime();
       continue;
     }
-    if (!pause && GetTime() - entity._time >= ENTITY_UPDATE_TIME) {
+    if (!pause) {
       auto nx = nextPos.x - entity._positions.front().x,
            ny = nextPos.y - entity._positions.front().y;
-      u8 dir = (nx >= 1) ? 1 : (nx <= -1) ? 2 : (ny >= 1) ? 3 : 4;
+      u8 dir = (nx >= 1) ? 0 : (nx <= -1) ? 1 : (ny >= 1) ? 2 : 3;
       auto &cell = at(nextPos.y, nextPos.x);
-      Vector2 relative_position;
-      switch (dir) {
-      case 1:
-        relative_position = {1, 0};
-        break;
-      case 2:
-        relative_position = {-1, 0};
-        break;
-      case 3:
-        relative_position = {0, 1};
-        break;
-      case 4:
-        relative_position = {0, -1};
-        break;
-      }
+      Vector2 positions[] = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+      Vector2 relative_position = positions[dir];
       bool entityBlocking = 0;
       for (auto &other_entity : entities) {
         if (other_entity._positions.front() == nextPos + relative_position ||
@@ -189,9 +176,9 @@ board_t::board_t() {
   boardBG.reserve(boardHeight / cellSizeY);
   std::ifstream file("board.brd");
   if (!file.is_open()) {
-    for (uint32_t i = 0; i < boardHeight; i += cellSizeY) {
+    for (u32 i = 0; i < boardHeight; i += cellSizeY) {
       std::vector<cell_t> row;
-      for (uint32_t j = 0; j < boardWidth; j += cellSizeX) {
+      for (u32 j = 0; j < boardWidth; j += cellSizeX) {
         row.push_back(cell_t(j, i));
       }
       boardBG.emplace_back(row);
@@ -199,11 +186,11 @@ board_t::board_t() {
     return;
   }
   std::string line;
-  i32 i = 0;
+  i32 i = 0, idx = 0, j = 0;
   while (std::getline(file, line)) {
     std::vector<cell_t> row;
-    i32 idx = 0;
-    i32 j = 0;
+    idx = 0;
+    j = 0;
     for (auto &c : line) {
       row.push_back(cell_t(j, i));
       row.at(idx).set(c - 70);
@@ -217,7 +204,7 @@ board_t::board_t() {
 bool board_t::cant_move(i32 x, i32 y, Vector2 prev) {
   if (at(y, x)._t == BASE_ROAD) {
     return 1;
-  } else if (at(y, x)._t == ROAD_CROSS || at(prev.y,prev.x)._t == ROAD_CROSS)
+  } else if (at(y, x)._t == ROAD_CROSS || at(prev.y, prev.x)._t == ROAD_CROSS)
     return 0;
   float movX = x - prev.x;
   float movY = y - prev.y;
@@ -229,14 +216,14 @@ bool board_t::cant_move(i32 x, i32 y, Vector2 prev) {
 
   return iterator->second.find({movX, movY}) == iterator->second.end();
 }
-void board_t::bfs(std::vector<u8> &table, Vector2 &end, Vector2 &start,
-                  std::stack<Vector2> &path) {
+void board_t::bfs(std::bitset<tableWidth * tableHeight> &table, Vector2 &end,
+                  Vector2 &start, std::stack<Vector2> &path) {
   std::queue<Vector2> paths;
   std::unordered_map<Vector2, Vector2> parents;
   paths.push(start);
   Vector2 diffs[] = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
   while (!paths.empty()) {
-    BeginDrawing();
+    // BeginDrawing();
     auto curr = paths.front();
     if (curr.x == end.x && curr.y == end.y) {
       path.push(end);
@@ -254,22 +241,22 @@ void board_t::bfs(std::vector<u8> &table, Vector2 &end, Vector2 &start,
       if ((i32)nx < 0 || (i32)nx > boardWidth || (i32)ny >= boardHeight ||
           (i32)ny < 0)
         continue;
-      if (table.at(nx + ny * tableWidth) || cant_move((i32)nx, (i32)ny, curr))
+      if (table[nx + ny * tableWidth] || cant_move((i32)nx, (i32)ny, curr))
         continue;
-      DrawRectangle(nx * 10, ny * 10, 10, 10, {0,0,255,255});
+      // DrawRectangle(nx * 10, ny * 10, 10, 10, {0,0,255,255});
       parents[{nx, ny}] = curr;
-      table.at((i32)nx + (i32)ny * tableWidth) = 1;
+
+      table[(i32)nx + (i32)ny * tableWidth] = 1;
       paths.push({nx, ny});
     }
-    EndDrawing();
+    // EndDrawing();
   }
 }
 std::stack<Vector2> board_t::find_path(Vector2 start, Vector2 end) {
   std::stack<Vector2> path;
-  std::vector<u8> table(boardWidth / cellSizeX * boardHeight / cellSizeY, 0);
+  // std::vector<u8> table(boardWidth / cellSizeX * boardHeight / cellSizeY, 0);
+  std::bitset<tableWidth * tableHeight> table;
   u8 found = 0;
   bfs(table, end, start, path);
-  if (path.size() == 1)
-    path.pop();
   return path;
 }

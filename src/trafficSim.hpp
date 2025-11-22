@@ -14,7 +14,7 @@ class trafficSim {
 
 public:
   trafficSim() {
-    InitWindow(screenWidth, screenHeight, "Traffic sim");
+    InitWindow(screenWidth, screenHeight, "TrafficSim");
     SetWindowState(FLAG_WINDOW_RESIZABLE);
     SetTargetFPS(TARGET_FPS);
     area = VisibleArea(_camera);

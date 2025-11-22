@@ -1,6 +1,7 @@
 #include "cell.hpp"
 #include "definitions.hpp"
 #include "entity.hpp"
+#include <bitset>
 #include <raylib.h>
 #include <stack>
 #include <vector>
@@ -15,7 +16,7 @@ public:
   board_t();
   ~board_t();
 private:
-  void bfs(std::vector<u8> &table, Vector2 &end, Vector2 &start,
+  void bfs(std::bitset<tableWidth * tableHeight> &table, Vector2 &end, Vector2 &start,
            std::stack<Vector2> &path);
   void draw_cells(u8 &pause, VisibleArea area);
   void draw_entities(u8 &pause);

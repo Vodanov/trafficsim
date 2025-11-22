@@ -6,7 +6,7 @@ void entity_t::move(u8 &dir) {
     _speed += _acceleration;
   if (dir != _dir) {
     _dir = dir;
-    _speed /= 2;
+    _speed /= 1.5;
   }
   switch (dir) {
   case 1:
@@ -30,10 +30,8 @@ void entity_t::move(u8 &dir) {
     _relative_position = {0, 0};
   }
 }
-Vector2 entity_t::next_pos() { return {_path.top().x, _path.top().y}; }
+Vector2 entity_t::next_pos() { return _path.top(); }
 Vector2 entity_t::next_next_pos() {
-  if (_path.empty())
-    return {};
   Vector2 tmp = _path.top(), res = {};
   _path.pop();
   if (!_path.empty())
@@ -48,13 +46,13 @@ void entity_t::draw(u8 &pause) {
                   cellSizeY, _col);
 }
 entity_t::entity_t(u16 x, u16 y, Color col) {
-  _start = {(float)x,(float)y};
+  _start = {(float)x, (float)y};
   _positions.front().x = x;
   _positions.front().y = y;
   _col = col;
 }
-entity_t::entity_t(u16 x, u16 y){
-  _start = {(float)x,(float)y};
+entity_t::entity_t(u16 x, u16 y) {
+  _start = {(float)x, (float)y};
   _positions.front().x = x;
   _positions.front().y = y;
 }

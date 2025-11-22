@@ -18,8 +18,8 @@ std::unordered_map<u8, Color> typeToColor = {
     {ROAD_UP_LEFT_DOWN, {50, 150, 100, 255}},
     {ROAD_UP_RIGHT_DOWN, {100, 50, 150, 255}},
     {ROAD_LEFT_DOWN_RIGHT, {150, 150, 50, 255}},
-    {ROAD_CROSS, {255, 255, 255, 255}},
-    {GRASS, {0, 200, 0, 255}},
+    {ROAD_CROSS, {0, 0, 255, 255}},
+    {GRASS, {0, 120, 0, 255}},
     {BUILDING, {100, 50, 0, 255}},
     {SIGNAL_UP_RED, {255, 0, 0, 255}},
     {SIGNAL_RIGHT_RED, {255, 0, 0, 255}},
@@ -34,6 +34,7 @@ std::unordered_map<u8, Color> typeToColor = {
     {SIGNAL_DOWN_GREEN, {0, 255, 0, 255}},
     {SIGNAL_LEFT_GREEN, {0, 255, 0, 255}}
 };
+// tbd
 std::unordered_map<u8, Texture2D> textureMap{
   {GRASS,LoadTexture("/textures/grass.png")},
   {0,LoadTexture("/textures/empty.png")}
