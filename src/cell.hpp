@@ -10,7 +10,7 @@ public:
   cell_t(i32 posX, i32 posY);
   u16 _x, _y;
   Color _col{0, 0, 0, 255};
-  u8 _c{GRASS};
+  u8 _cost{GRASS};
   u8 _t{GRASS};
   double _time{0};
 };

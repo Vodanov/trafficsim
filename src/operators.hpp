@@ -19,3 +19,9 @@ inline Vector2 operator-(const Vector2 &a, const Vector2 &b) {
 inline Vector2 operator+(const Vector2 &a, const Vector2 &b) {
   return {a.x + b.x, a.y + b.y};
 }
+inline bool operator==(const Color& a, const Color& b){
+    return (a.r == b.r && a.g == b.g && a.b == b.b);
+}
+inline bool operator!=(const Color& a, const Color& b){
+    return !(a==b);
+}

@@ -3,15 +3,18 @@
 #include <raylib.h>
 #include <stack>
 #include <vector>
+#include <future>
 class entity_t {
 public:
   std::vector<Vector2> _positions{{0, 0}};
   std::stack<Vector2> _path;
+  std::future<std::stack<Vector2>> _path_future;
   Vector2 _dest{0, 0}, _start;
   Color _col{0, 0, 0, 0};
   double _time{0};
   u8 _dir{0};
   float _speed{0.0f}, _maxSpeed{0.76f}, _acceleration{0.03f};
+  u8 _has_path{0}, _searching_path{0};
   void draw(u8 &pause);
   void move(u8& dir);
   Vector2 next_pos();

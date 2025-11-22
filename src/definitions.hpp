@@ -6,8 +6,8 @@
 #define u16 uint16_t
 #define u8 uint8_t
 constexpr const static u16 TARGET_FPS = 144;
-constexpr const static double SIGNAL_TIME = 0.5;
-constexpr const static double ENTITY_UPDATE_TIME = .03;
+constexpr const static double SIGNAL_TIME = 2.5;
+constexpr const static double ENTITY_UPDATE_TIME = 0;
 constexpr const static u32 screenWidth = 1280;
 constexpr const static u32 screenHeight = 720;
 constexpr const static u32 boardWidth = 4000;
@@ -47,6 +47,7 @@ enum tileType {
   ROAD_CROSS,
 
   GRASS,
+  ROAD_GRASS,
   BUILDING,
   SIGNAL_UP_RED,
   SIGNAL_RIGHT_RED,

@@ -1,8 +1,12 @@
 #include "entity.hpp"
 #include "definitions.hpp"
+#include <print>
 #include <raylib.h>
 void entity_t::move(u8 &dir) {
-  if (_speed <= _maxSpeed)
+  if (_time >= ENTITY_UPDATE_TIME)
+    if (_path.empty())
+      return;
+  if (_speed <= _maxSpeed || _acceleration <= 0)
     _speed += _acceleration;
   if (dir != _dir) {
     _dir = dir;
@@ -27,11 +31,17 @@ void entity_t::move(u8 &dir) {
     _positions.front().x = _path.top().x;
     _positions.front().y = _path.top().y;
     _path.pop();
-    _relative_position = {0, 0};
+    _relative_position = {0,0};
   }
 }
-Vector2 entity_t::next_pos() { return _path.top(); }
+Vector2 entity_t::next_pos() {
+  if (_path.empty())
+    return {0, 0};
+  return _path.top();
+}
 Vector2 entity_t::next_next_pos() {
+  if (_path.empty() || _path.size() == 1)
+    return {};
   Vector2 tmp = _path.top(), res = {};
   _path.pop();
   if (!_path.empty())

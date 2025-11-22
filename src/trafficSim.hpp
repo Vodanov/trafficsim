@@ -5,6 +5,8 @@
 #include "visible_area.hpp"
 #include <math.h>
 #include <raylib.h>
+#include <string>
+#include <thread>
 class trafficSim {
   Camera2D _camera = {0, 0, 0, 0, 0, 1.f};
   board_t board;
@@ -18,6 +20,7 @@ public:
     SetWindowState(FLAG_WINDOW_RESIZABLE);
     SetTargetFPS(TARGET_FPS);
     area = VisibleArea(_camera);
+    board._camera = &_camera;
   }
   void run() {
     while (!WindowShouldClose() || IsKeyPressed(KEY_CAPS_LOCK)) {
@@ -30,6 +33,11 @@ public:
       if (IsKeyPressed(KEY_SPACE))
         pause = !pause;
       board.draw_board(pause, VisibleArea(_camera));
+      std::string text = std::to_string(_camera.offset.x);
+      DrawText(std::to_string(board.entity_count()).c_str(),
+               _camera.offset.x / _camera.zoom * -1,
+               _camera.offset.y / _camera.zoom * -1, 25 / _camera.zoom,
+               {0, 255, 0, 255});
       Vector2 mousePos = GetMousePosition();
       cellX = (mousePos.x / cellSizeX - _camera.offset.x / cellSizeX) /
               _camera.zoom;
@@ -38,13 +46,17 @@ public:
       if (cellX <= boardWidth / cellSizeX - 1 &&
           cellY <= boardHeight / cellSizeY - 1) {
         if (IsKeyPressed(KEY_F)) {
-          board.create_desitation(cellX,cellY);
+          board.create_desitation(cellX, cellY);
         }
         if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
           board.at(cellY, cellX).set(type);
         }
         if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON)) {
-          board.create_entity(cellX, cellY, {255, 0, 0, 255});
+          std::thread entity_thread(
+              [x = cellX, y = cellY, &board = this->board]() {
+                board.create_entity(x, y, {255, 0, 0, 255});
+              });
+          entity_thread.detach();
         }
       }
       EndDrawing();
@@ -53,6 +65,9 @@ public:
   ~trafficSim() { CloseWindow(); }
 
 private:
+  static void create_thread(u32 x, u32 y, board_t &board) {
+    board.create_entity(x, y, {255, 0, 0, 255});
+  }
   void camera_checks() {
     auto old = _camera;
     if (IsKeyPressed(KEY_R))

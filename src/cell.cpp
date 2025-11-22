@@ -32,7 +32,43 @@ std::unordered_map<u8, Color> typeToColor = {
     {SIGNAL_UP_GREEN, {0, 255, 0, 255}},
     {SIGNAL_RIGHT_GREEN, {0, 255, 0, 255}},
     {SIGNAL_DOWN_GREEN, {0, 255, 0, 255}},
-    {SIGNAL_LEFT_GREEN, {0, 255, 0, 255}}
+    {SIGNAL_LEFT_GREEN, {0, 255, 0, 255}},
+    {ROAD_GRASS, {76, 63, 47, 255}},
+};
+std::unordered_map<u8, u8> typeToCost = {
+    {BASE_ROAD, 1},
+    {ROAD_UP, 1},
+    {ROAD_RIGHT, 1},
+    {ROAD_DOWN, 1},
+    {ROAD_LEFT, 1},
+    {ROAD_UP_DOWN, 1},
+    {ROAD_LEFT_RIGHT, 1},
+    {ROAD_LEFT_UP, 1},
+    {ROAD_RIGHT_UP, 1},
+    {ROAD_LEFT_DOWN, 1},
+    {ROAD_RIGHT_DOWN, 1},
+    {ROAD_UP_LEFT_RIGHT, 1},
+    {ROAD_UP_LEFT_DOWN, 1},
+    {ROAD_UP_RIGHT_DOWN, 1},
+    {ROAD_LEFT_DOWN_RIGHT, 1},
+    {ROAD_CROSS, 2},
+    
+    {SIGNAL_UP_RED, 4},
+    {SIGNAL_RIGHT_RED, 4},
+    {SIGNAL_DOWN_RED, 4},
+    {SIGNAL_LEFT_RED, 4},
+    {SIGNAL_UP_YELLOW, 4},
+    {SIGNAL_RIGHT_YELLOW, 4},
+    {SIGNAL_DOWN_YELLOW, 4},
+    {SIGNAL_LEFT_YELLOW, 4},
+    {SIGNAL_UP_GREEN, 4},
+    {SIGNAL_RIGHT_GREEN, 4},
+    {SIGNAL_DOWN_GREEN, 4},
+    {SIGNAL_LEFT_GREEN, 4},
+    
+    {GRASS, 40},
+    {ROAD_GRASS, 20},
+    {BUILDING, 255},
 };
 // tbd
 std::unordered_map<u8, Texture2D> textureMap{
@@ -41,7 +77,8 @@ std::unordered_map<u8, Texture2D> textureMap{
 };
 void cell_t::set(u8 i) {
   _t = i;
-  _c = i;
+  _cost = typeToCost[i];
+  if(_cost == 0) _cost = 255;
   _col = typeToColor[_t];
 }
 
@@ -88,7 +125,7 @@ void cell_t::set() {
   }
   _col = typeToColor[_t];
 }
-cell_t::cell_t(i32 posX, i32 posY) : _x(posX), _y(posY){ set(_c); }
+cell_t::cell_t(i32 posX, i32 posY) : _x(posX), _y(posY){ set(_cost); }
 void cell_t::move(u8 dir) {}
 char cell_t::info() { return _t; }
 void cell_t::draw(double time, u8 &pause) {
