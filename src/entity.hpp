@@ -7,7 +7,6 @@ class entity_t {
 public:
   Vector2 _position{0, 0};
   std::stack<Vector2> _path;
-  std::future<std::stack<Vector2>> _path_future;
   Vector2 _dest{0, 0}, _start;
   Color _col{0, 0, 0, 0};
   double _time{0};

@@ -18,11 +18,13 @@ public:
   board_t();
   ~board_t();
   Camera2D *_camera;
-private:
+  void process_entities(double &time, u8 &pause);
+  private:
   void bfs(std::bitset<tableWidth * tableHeight> &table, Vector2 &end, Vector2 &start,
            std::stack<Vector2> &path);
   void draw_cells(u8 &pause, VisibleArea area);
-  void draw_entities(u8 &pause, double &time);
+
+  void draw_entities();
   bool valid_road(i32 x, i32 y);
   std::vector<std::vector<cell_t>> boardBG;
   bool movement_not_allowed(i32 x, i32 y, Vector2 prev);

@@ -1,7 +1,6 @@
 #pragma once
 #include "board.hpp"
 #include "definitions.hpp"
-#include "operators.hpp"
 #include "visible_area.hpp"
 #include <math.h>
 #include <raylib.h>
@@ -10,9 +9,11 @@
 class trafficSim {
   Camera2D _camera = {0, 0, 0, 0, 0, 1.f};
   board_t board;
-  u8 type = BASE_ROAD, pause = 1;
+  TileType type = TileType::BASE_ROAD;
+  u8 pause = 1;
   VisibleArea area;
   u32 cellX, cellY;
+  std::thread entity_process_thread;
 
 public:
   trafficSim() {
@@ -23,6 +24,16 @@ public:
     board._camera = &_camera;
   }
   void run() {
+    entity_process_thread = std::thread([this]() {
+      while (!WindowShouldClose()) {
+        if (!pause) {
+          double time = GetTime();
+          board.process_entities(time, pause);
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+      }
+    });
+    entity_process_thread.detach();
     while (!WindowShouldClose() || IsKeyPressed(KEY_CAPS_LOCK)) {
       _camera.zoom = expf(logf(_camera.zoom) + (GetMouseWheelMove() * 0.1f));
       camera_checks();
@@ -97,41 +108,41 @@ private:
     if (IsKeyDown(KEY_LEFT_SHIFT)) {
       if (w) {
         if (IsKeyDown(KEY_LEFT_CONTROL)) {
-          type = SIGNAL_UP_YELLOW;
+          type = TileType::SIGNAL_UP_YELLOW;
         } else if (IsKeyDown(KEY_LEFT_ALT)) {
-          type = SIGNAL_UP_GREEN;
+          type = TileType::SIGNAL_UP_GREEN;
         } else {
-          type = SIGNAL_UP_RED;
+          type = TileType::SIGNAL_UP_RED;
         }
         return;
       }
       if (d) {
         if (IsKeyDown(KEY_LEFT_CONTROL)) {
-          type = SIGNAL_RIGHT_YELLOW;
+          type = TileType::SIGNAL_RIGHT_YELLOW;
         } else if (IsKeyDown(KEY_LEFT_ALT)) {
-          type = SIGNAL_RIGHT_GREEN;
+          type = TileType::SIGNAL_RIGHT_GREEN;
         } else {
-          type = SIGNAL_RIGHT_RED;
+          type = TileType::SIGNAL_RIGHT_RED;
         }
         return;
       }
       if (s) {
         if (IsKeyDown(KEY_LEFT_CONTROL)) {
-          type = SIGNAL_DOWN_YELLOW;
+          type = TileType::SIGNAL_DOWN_YELLOW;
         } else if (IsKeyDown(KEY_LEFT_ALT)) {
-          type = SIGNAL_DOWN_GREEN;
+          type = TileType::SIGNAL_DOWN_GREEN;
         } else {
-          type = SIGNAL_DOWN_RED;
+          type = TileType::SIGNAL_DOWN_RED;
         }
         return;
       }
       if (a) {
         if (IsKeyDown(KEY_LEFT_CONTROL)) {
-          type = SIGNAL_LEFT_YELLOW;
+          type = TileType::SIGNAL_LEFT_YELLOW;
         } else if (IsKeyDown(KEY_LEFT_ALT)) {
-          type = SIGNAL_LEFT_GREEN;
+          type = TileType::SIGNAL_LEFT_GREEN;
         } else {
-          type = SIGNAL_LEFT_RED;
+          type = TileType::SIGNAL_LEFT_RED;
         }
         return;
       }
@@ -139,66 +150,64 @@ private:
     i32 keyCount = (w ? 1 : 0) + (a ? 1 : 0) + (s ? 1 : 0) + (d ? 1 : 0);
     if (keyCount >= 2) {
       if (w && a && s && d) {
-        type = ROAD_CROSS;
+        type = TileType::ROAD_CROSS;
         return;
       }
       if (w && a && d) {
-        type = ROAD_UP_LEFT_RIGHT;
+        type = TileType::ROAD_UP_LEFT_RIGHT;
         return;
       }
       if (w && s && d) {
-        type = ROAD_UP_RIGHT_DOWN;
+        type = TileType::ROAD_UP_RIGHT_DOWN;
         return;
       }
       if (w && a && s) {
-        type = ROAD_UP_LEFT_DOWN;
+        type = TileType::ROAD_UP_LEFT_DOWN;
         return;
       }
       if (a && s && d) {
-        type = ROAD_LEFT_DOWN_RIGHT;
+        type = TileType::ROAD_LEFT_DOWN_RIGHT;
         return;
       }
       if (w && a) {
-        type = ROAD_LEFT_UP;
+        type = TileType::ROAD_LEFT_UP;
         return;
       }
       if (w && d) {
-        type = ROAD_RIGHT_UP;
+        type = TileType::ROAD_RIGHT_UP;
         return;
       }
       if (a && s) {
-        type = ROAD_LEFT_DOWN;
+        type = TileType::ROAD_LEFT_DOWN;
         return;
       }
       if (s && d) {
-        type = ROAD_RIGHT_DOWN;
+        type = TileType::ROAD_RIGHT_DOWN;
         return;
       }
       if (w && s) {
-        type = ROAD_UP_DOWN;
+        type = TileType::ROAD_UP_DOWN;
         return;
       }
       if (a && d) {
-        type = ROAD_LEFT_RIGHT;
+        type = TileType::ROAD_LEFT_RIGHT;
         return;
       }
     }
     if (w)
-      type = ROAD_UP;
+      type = TileType::ROAD_UP;
     if (d)
-      type = ROAD_RIGHT;
+      type = TileType::ROAD_RIGHT;
     if (s)
-      type = ROAD_DOWN;
+      type = TileType::ROAD_DOWN;
     if (a)
-      type = ROAD_LEFT;
+      type = TileType::ROAD_LEFT;
 
     if (IsKeyPressed(KEY_Z))
-      type = BASE_ROAD;
+      type = TileType::BASE_ROAD;
     if (IsKeyPressed(KEY_X))
-      type = GRASS;
+      type = TileType::GRASS;
     if (IsKeyPressed(KEY_C))
-      type = BUILDING;
-    if (IsKeyPressed(KEY_V))
-      type = 99;
+      type = TileType::BUILDING;
   }
 };

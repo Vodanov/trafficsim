@@ -1,7 +1,7 @@
 #include "definitions.hpp"
 class cell_t {
 public:
-  void set(u8 i);
+  void set(TileType i);
   void set(Color col);
   void set();
   void move(u8 dir);
@@ -10,7 +10,7 @@ public:
   cell_t(i32 posX, i32 posY);
   u16 _x, _y;
   Color _col{0, 0, 0, 255};
-  u8 _cost{GRASS};
-  u8 _t{GRASS};
+  u8 _cost{0};
+  TileType _t{TileType::GRASS};
   double _time{0};
 };
