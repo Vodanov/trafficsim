@@ -7,7 +7,7 @@ public:
   void move(u8 dir);
   char info();
   void draw(double time, u8& pause);
-  cell_t(i32 posX, i32 posY);
+  cell_t(i32 posX, i32 posY, TileType cost = TileType::GRASS);
   u16 _x, _y;
   Color _col{0, 0, 0, 255};
   u8 _cost{0};

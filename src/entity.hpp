@@ -2,7 +2,6 @@
 #include "definitions.hpp"
 #include <raylib.h>
 #include <stack>
-#include <future>
 class entity_t {
 public:
   Vector2 _position{0, 0};

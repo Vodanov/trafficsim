@@ -66,7 +66,7 @@ std::unordered_map<TileType, u8> typeToCost = {
     {TileType::SIGNAL_DOWN_GREEN, 4},
     {TileType::SIGNAL_LEFT_GREEN, 4},
     
-    {TileType::GRASS, 40},
+    {TileType::GRASS, 50},
     {TileType::ROAD_GRASS, 20},
     {TileType::BUILDING, 255},
 };
@@ -78,7 +78,6 @@ std::unordered_map<TileType, u8> typeToCost = {
 void cell_t::set(TileType i) {
   _t = i;
   _cost = typeToCost[i];
-  if(_cost == 0) _cost = 255;
   _col = typeToColor[_t];
 }
 
@@ -125,7 +124,7 @@ void cell_t::set() {
   }
   _col = typeToColor[_t];
 }
-cell_t::cell_t(i32 posX, i32 posY) : _x(posX), _y(posY){ set(static_cast<TileType>(_cost)); }
+cell_t::cell_t(i32 posX, i32 posY, TileType cost) : _x(posX), _y(posY){ set(cost); }
 void cell_t::move(u8 dir) {}
 char cell_t::info() { return static_cast<u8>(_t); }
 void cell_t::draw(double time, u8 &pause) {
@@ -134,7 +133,7 @@ void cell_t::draw(double time, u8 &pause) {
     DrawRectangle(_x, _y, cellSizeX, cellSizeY, _col);
     return;
   }
-  if (time - _time >= SIGNAL_TIME && (static_cast<u8>(_t) >= 18 && static_cast<u8>(_t) <= 29)) {
+  if (time - _time >= SIGNAL_TIME && (static_cast<u8>(_t) >= static_cast<u8>(TileType::SIGNAL_UP_RED) && static_cast<u8>(_t) <= static_cast<u8>(TileType::SIGNAL_LEFT_GREEN))) {
     set();
     _time = time;
   }

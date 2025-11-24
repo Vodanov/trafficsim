@@ -9,7 +9,7 @@
 class trafficSim {
   Camera2D _camera = {0, 0, 0, 0, 0, 1.f};
   board_t board;
-  TileType type = TileType::BASE_ROAD;
+  TileType type = TileType::GRASS;
   u8 pause = 1;
   VisibleArea area;
   u32 cellX, cellY;
@@ -44,6 +44,15 @@ public:
       if (IsKeyPressed(KEY_SPACE))
         pause = !pause;
       board.draw_board(pause, VisibleArea(_camera));
+      if (board.bfs_search_res.size() != 0) {
+        for (auto position : board.bfs_search_res) {
+          float screenX = position.x * 10;
+        float screenY = position.y * 10;
+        float size = 10.0f / _camera.zoom;
+        
+        DrawRectangle(screenX, screenY, size, size, {0, 0, 255, 20});
+        }
+      }
       std::string text = std::to_string(_camera.offset.x);
       DrawText(std::to_string(board.entity_count()).c_str(),
                _camera.offset.x / _camera.zoom * -1,

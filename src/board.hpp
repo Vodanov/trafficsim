@@ -1,11 +1,12 @@
 #include "cell.hpp"
 #include "definitions.hpp"
 #include "entity.hpp"
+#include "visible_area.hpp"
 #include <bitset>
+#include <queue>
 #include <raylib.h>
 #include <stack>
 #include <vector>
-#include "visible_area.hpp"
 class board_t {
 public:
   cell_t &at(i32 idx, i32 idx2);
@@ -19,9 +20,10 @@ public:
   ~board_t();
   Camera2D *_camera;
   void process_entities(double &time, u8 &pause);
-  private:
-  void bfs(std::bitset<tableWidth * tableHeight> &table, Vector2 &end, Vector2 &start,
-           std::stack<Vector2> &path);
+  std::vector<Vector2> bfs_search_res;
+private:
+  void bfs(std::bitset<tableWidth * tableHeight> &table, Vector2 &end,
+           Vector2 &start, std::stack<Vector2> &path);
   void draw_cells(u8 &pause, VisibleArea area);
 
   void draw_entities();
@@ -30,6 +32,6 @@ public:
   bool movement_not_allowed(i32 x, i32 y, Vector2 prev);
   std::vector<entity_t> entities;
   std::stack<Vector2> find_path(Vector2 start, Vector2 end);
-  std::vector<Vector2> _destinations {};
+  std::vector<Vector2> _destinations{};
   void get_destination(entity_t &ent);
 };
