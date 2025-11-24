@@ -22,31 +22,28 @@ void entity_t::move(u8 &dir) {
   case 4:
     _relative_position.y -= _speed;
     break;
+  case 5:
+    _relative_position.y += _speed;
+    _relative_position.x += _speed;
+    break;
+  case 6:
+    _relative_position.y += _speed;
+    _relative_position.x -= _speed;
+    break;
+  case 7:
+    _relative_position.y -= _speed;
+    _relative_position.x += _speed;
+    break;
+  case 8:
+    _relative_position.y -= _speed;
+    _relative_position.x -= _speed;
+    break;
   }
-    if (_relative_position.x >= 1.0f || _relative_position.x <= -1.0f ||
+  if (_relative_position.x >= 1.0f || _relative_position.x <= -1.0f ||
       _relative_position.y >= 1.0f || _relative_position.y <= -1.0f) {
-    float nx = 0, ny = 0;
-    
-    if (_relative_position.x >= 1.0f) {
-      nx = _relative_position.x - 1.0f;
-      _position.x = _path.top().x;
-      _path.pop();
-    } else if (_relative_position.x <= -1.0f) {
-      nx = _relative_position.x + 1.0f;
-      _position.x = _path.top().x;
-      _path.pop();
-    }
-    
-    if (_relative_position.y >= 1.0f) {
-      ny = _relative_position.y - 1.0f;
-      _position.y = _path.top().y;
-      _path.pop();
-    } else if (_relative_position.y <= -1.0f) {
-      ny = _relative_position.y + 1.0f;
-      _position.y = _path.top().y;
-      _path.pop();
-    }
-    _relative_position = {nx, ny};
+    _position = _path.top();
+    _path.pop();
+    _relative_position = {0, 0};
   }
 }
 Vector2 entity_t::next_pos() {
@@ -55,7 +52,8 @@ Vector2 entity_t::next_pos() {
   return _path.top();
 }
 Vector2 entity_t::next_next_pos() {
-  if (_path.size() < 2) return {};
+  if (_path.size() < 2)
+    return {};
   Vector2 next = _path.top();
   _path.pop();
   Vector2 result = _path.empty() ? Vector2{0, 0} : _path.top();

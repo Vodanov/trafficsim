@@ -3,11 +3,11 @@
 #include <raylib.h>
 #include <unordered_map>
 std::unordered_map<TileType, Color> typeToColor = {
-    {TileType::BASE_ROAD, {0, 0, 0, 255}},
-    {TileType::ROAD_UP, {100, 100, 100, 255}},
-    {TileType::ROAD_RIGHT, {120, 120, 120, 255}},
-    {TileType::ROAD_DOWN, {140, 140, 140, 255}},
-    {TileType::ROAD_LEFT, {160, 160, 160, 255}},
+    {TileType::BASE_ROAD, {50, 50, 50, 255}},
+    {TileType::ROAD_UP, {80, 80, 80, 255}},
+    {TileType::ROAD_RIGHT, {100, 100, 100, 255}},
+    {TileType::ROAD_DOWN, {120, 120, 120, 255}},
+    {TileType::ROAD_LEFT, {140, 140, 140, 255}},
     {TileType::ROAD_UP_DOWN, {80, 80, 200, 255}},
     {TileType::ROAD_LEFT_RIGHT, {200, 80, 80, 255}},
     {TileType::ROAD_LEFT_UP, {80, 200, 80, 255}},
@@ -18,23 +18,34 @@ std::unordered_map<TileType, Color> typeToColor = {
     {TileType::ROAD_UP_LEFT_DOWN, {50, 150, 100, 255}},
     {TileType::ROAD_UP_RIGHT_DOWN, {100, 50, 150, 255}},
     {TileType::ROAD_LEFT_DOWN_RIGHT, {150, 150, 50, 255}},
-    {TileType::ROAD_CROSS, {0, 0, 255, 255}},
-    {TileType::GRASS, {0, 120, 0, 255}},
-    {TileType::BUILDING, {100, 50, 0, 255}},
-    {TileType::SIGNAL_UP_RED, {255, 0, 0, 255}},
-    {TileType::SIGNAL_RIGHT_RED, {255, 0, 0, 255}},
-    {TileType::SIGNAL_DOWN_RED, {255, 0, 0, 255}},
-    {TileType::SIGNAL_LEFT_RED, {255, 0, 0, 255}},
-    {TileType::SIGNAL_UP_YELLOW, {255, 255, 0, 255}},
-    {TileType::SIGNAL_RIGHT_YELLOW, {255, 255, 0, 255}},
-    {TileType::SIGNAL_DOWN_YELLOW, {255, 255, 0, 255}},
-    {TileType::SIGNAL_LEFT_YELLOW, {255, 255, 0, 255}},
-    {TileType::SIGNAL_UP_GREEN, {0, 255, 0, 255}},
-    {TileType::SIGNAL_RIGHT_GREEN, {0, 255, 0, 255}},
-    {TileType::SIGNAL_DOWN_GREEN, {0, 255, 0, 255}},
-    {TileType::SIGNAL_LEFT_GREEN, {0, 255, 0, 255}},
-    {TileType::ROAD_GRASS, {76, 63, 47, 255}},
+    {TileType::ROAD_CROSS, {180, 180, 180, 255}},
+    
+    // Diagonal roads - using distinct brownish tones
+    {TileType::ROAD_DIAGONAL_DOWN_LEFT, {120, 100, 80, 255}},
+    {TileType::ROAD_DIAGONAL_DOWN_RIGHT, {140, 120, 100, 255}},
+    {TileType::ROAD_DIAGONAL_UP_RIGHT, {160, 140, 120, 255}},
+    {TileType::ROAD_DIAGONAL_UP_LEFT, {180, 160, 140, 255}},
+    
+    {TileType::GRASS, {40, 160, 40, 255}},
+    {TileType::BUILDING, {120, 60, 20, 255}},
+    
+    // Traffic signals - keeping original colors but making them more vibrant
+    {TileType::SIGNAL_UP_RED, {255, 40, 40, 255}},
+    {TileType::SIGNAL_RIGHT_RED, {255, 40, 40, 255}},
+    {TileType::SIGNAL_DOWN_RED, {255, 40, 40, 255}},
+    {TileType::SIGNAL_LEFT_RED, {255, 40, 40, 255}},
+    {TileType::SIGNAL_UP_YELLOW, {255, 255, 50, 255}},
+    {TileType::SIGNAL_RIGHT_YELLOW, {255, 255, 50, 255}},
+    {TileType::SIGNAL_DOWN_YELLOW, {255, 255, 50, 255}},
+    {TileType::SIGNAL_LEFT_YELLOW, {255, 255, 50, 255}},
+    {TileType::SIGNAL_UP_GREEN, {50, 255, 50, 255}},
+    {TileType::SIGNAL_RIGHT_GREEN, {50, 255, 50, 255}},
+    {TileType::SIGNAL_DOWN_GREEN, {50, 255, 50, 255}},
+    {TileType::SIGNAL_LEFT_GREEN, {50, 255, 50, 255}},
+    
+    {TileType::ROAD_GRASS, {90, 110, 70, 255}},
 };
+
 std::unordered_map<TileType, u8> typeToCost = {
     {TileType::BASE_ROAD, 1},
     {TileType::ROAD_UP, 1},
@@ -51,7 +62,13 @@ std::unordered_map<TileType, u8> typeToCost = {
     {TileType::ROAD_UP_LEFT_DOWN, 1},
     {TileType::ROAD_UP_RIGHT_DOWN, 1},
     {TileType::ROAD_LEFT_DOWN_RIGHT, 1},
-    {TileType::ROAD_CROSS, 2},
+    {TileType::ROAD_CROSS, 1},
+    
+    // Diagonal roads - slightly higher cost than straight roads but less than grass
+    {TileType::ROAD_DIAGONAL_DOWN_LEFT, 2},
+    {TileType::ROAD_DIAGONAL_DOWN_RIGHT, 2},
+    {TileType::ROAD_DIAGONAL_UP_RIGHT, 2},
+    {TileType::ROAD_DIAGONAL_UP_LEFT, 2},
     
     {TileType::SIGNAL_UP_RED, 4},
     {TileType::SIGNAL_RIGHT_RED, 4},
@@ -66,8 +83,8 @@ std::unordered_map<TileType, u8> typeToCost = {
     {TileType::SIGNAL_DOWN_GREEN, 4},
     {TileType::SIGNAL_LEFT_GREEN, 4},
     
-    {TileType::GRASS, 50},
-    {TileType::ROAD_GRASS, 20},
+    {TileType::GRASS, 10},
+    {TileType::ROAD_GRASS, 5},
     {TileType::BUILDING, 255},
 };
 // tbd

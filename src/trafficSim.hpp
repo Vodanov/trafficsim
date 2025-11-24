@@ -47,10 +47,10 @@ public:
       if (board.bfs_search_res.size() != 0) {
         for (auto position : board.bfs_search_res) {
           float screenX = position.x * 10;
-        float screenY = position.y * 10;
-        float size = 10.0f / _camera.zoom;
-        
-        DrawRectangle(screenX, screenY, size, size, {0, 0, 255, 20});
+          float screenY = position.y * 10;
+          float size = 10.0f / _camera.zoom;
+
+          DrawRectangle(screenX, screenY, size, size, {0, 0, 255, 20});
         }
       }
       std::string text = std::to_string(_camera.offset.x);
@@ -213,10 +213,16 @@ private:
       type = TileType::ROAD_LEFT;
 
     if (IsKeyPressed(KEY_Z))
-      type = TileType::BASE_ROAD;
+      type = TileType::ROAD_DIAGONAL_DOWN_LEFT;
+    if (IsKeyPressed(KEY_C))
+      type = TileType::ROAD_DIAGONAL_DOWN_RIGHT;
     if (IsKeyPressed(KEY_X))
       type = TileType::GRASS;
-    if (IsKeyPressed(KEY_C))
+    if (IsKeyPressed(KEY_E))
+      type = TileType::ROAD_DIAGONAL_UP_RIGHT;
+    if (IsKeyPressed(KEY_Q))
+      type = TileType::ROAD_DIAGONAL_UP_LEFT;
+    if (IsKeyPressed(KEY_V))
       type = TileType::BUILDING;
   }
 };
