@@ -241,7 +241,7 @@ void board_t::bfs(std::bitset<tableWidth * tableHeight> &table, Vector2 &end,
         continue;
 
       Vector2 npos{(float)nx, (float)ny};
-      bfs_search_res.push_back(npos);
+      // bfs_search_res.push_back(npos);
       u8 diagonal = (dx != 0 && dy != 0);
       double tileCost = at(ny, nx)._cost;
       table[idx] = 1;

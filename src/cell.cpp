@@ -64,11 +64,10 @@ std::unordered_map<TileType, u8> typeToCost = {
     {TileType::ROAD_LEFT_DOWN_RIGHT, 1},
     {TileType::ROAD_CROSS, 1},
     
-    // Diagonal roads - slightly higher cost than straight roads but less than grass
-    {TileType::ROAD_DIAGONAL_DOWN_LEFT, 2},
-    {TileType::ROAD_DIAGONAL_DOWN_RIGHT, 2},
-    {TileType::ROAD_DIAGONAL_UP_RIGHT, 2},
-    {TileType::ROAD_DIAGONAL_UP_LEFT, 2},
+    {TileType::ROAD_DIAGONAL_DOWN_LEFT, 1},
+    {TileType::ROAD_DIAGONAL_DOWN_RIGHT, 1},
+    {TileType::ROAD_DIAGONAL_UP_RIGHT, 1},
+    {TileType::ROAD_DIAGONAL_UP_LEFT, 1},
     
     {TileType::SIGNAL_UP_RED, 4},
     {TileType::SIGNAL_RIGHT_RED, 4},
