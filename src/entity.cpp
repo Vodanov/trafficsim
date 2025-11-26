@@ -23,19 +23,19 @@ void entity_t::move(u8 &dir) {
     _relative_position.y -= _speed;
     break;
   case 5:
-    _relative_position.y += _speed;
+    _relative_position.y -= _speed;
     _relative_position.x += _speed;
     break;
   case 6:
-    _relative_position.y += _speed;
+    _relative_position.y -= _speed;
     _relative_position.x -= _speed;
     break;
   case 7:
-    _relative_position.y -= _speed;
+    _relative_position.y += _speed;
     _relative_position.x += _speed;
     break;
   case 8:
-    _relative_position.y -= _speed;
+    _relative_position.y += _speed;
     _relative_position.x -= _speed;
     break;
   }
