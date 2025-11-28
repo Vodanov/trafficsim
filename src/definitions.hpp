@@ -10,6 +10,7 @@ using u16 = uint16_t;
 using u8 = uint8_t;
 constexpr const static u16 TARGET_FPS = 144;
 constexpr const static double SIGNAL_TIME = 2.5;
+constexpr const static double MOVEMENT_SIGNAL_TIME = SIGNAL_TIME / 2;
 constexpr const static double ENTITY_UPDATE_TIME = 0.02;
 constexpr const static u32 screenWidth = 1280;
 constexpr const static u32 screenHeight = 720;
@@ -27,11 +28,12 @@ enum class Direction : u8 {
   DOWN,
   LEFT,
   RIGHT,
-  DIAGONAL_UP_RIGHT,
+    DIAGONAL_UP_RIGHT,
   DIAGONAL_UP_LEFT,
   DIAGONAL_DOWN_RIGHT,
   DIAGONAL_DOWN_LEFT,
 };
+
 inline bool operator==(const Vector2 &a, const Vector2 &b) {
   return a.x == b.x && a.y == b.y;
 }
@@ -58,7 +60,8 @@ inline bool operator!=(const Color &a, const Color &b) { return !(a == b); }
 inline bool operator==(Direction a, Direction b) {
   return static_cast<u8>(a) == static_cast<u8>(b);
 }
-
+inline void operator-=(Vector2 &a, Vector2 &b) { a = a - b; }
+inline void operator+=(Vector2 &a, Vector2 &b) { a = a + b; }
 inline bool operator!=(Direction a, Direction b) { return !(a == b); }
 inline Direction operator|(Direction a, Direction b) {
   return static_cast<Direction>(static_cast<u8>(a) | static_cast<u8>(b));
@@ -77,13 +80,13 @@ enum class TileType : u8 {
   ROAD_DOWN,
   ROAD_LEFT,
 
-  // multi directional
   ROAD_UP_DOWN,
   ROAD_LEFT_RIGHT,
   ROAD_LEFT_UP,
   ROAD_RIGHT_UP,
   ROAD_LEFT_DOWN,
   ROAD_RIGHT_DOWN,
+
   ROAD_UP_LEFT_RIGHT,
   ROAD_UP_LEFT_DOWN,
   ROAD_UP_RIGHT_DOWN,
@@ -94,7 +97,6 @@ enum class TileType : u8 {
   GRASS,
   ROAD_GRASS,
   BUILDING,
-
   SIGNAL_UP_RED,
   SIGNAL_RIGHT_RED,
   SIGNAL_DOWN_RED,
@@ -126,7 +128,27 @@ static std::unordered_map<u8, TileType> directionToTileType = {
 inline TileType operator+(TileType &a, TileType &b) {
   return static_cast<TileType>(static_cast<u8>(a) + static_cast<u8>(b));
 }
-
+inline TileType operator==(TileType &a, TileType &b) {
+  return static_cast<TileType>(static_cast<u8>(a) == static_cast<u8>(b));
+}
+inline TileType operator>(TileType &a, TileType &b) {
+  return static_cast<TileType>(static_cast<u8>(a) > static_cast<u8>(b));
+}
+inline TileType operator<(TileType &a, TileType &b) {
+  return static_cast<TileType>(static_cast<u8>(a) < static_cast<u8>(b));
+}
+inline TileType operator<=(TileType &a, TileType &b) {
+  return static_cast<TileType>(static_cast<u8>(a) <= static_cast<u8>(b));
+}
+inline TileType operator>=(TileType &a, TileType &b) {
+  return static_cast<TileType>(static_cast<u8>(a) >= static_cast<u8>(b));
+}
+inline TileType operator>=(u8 &a, TileType &b) {
+  return static_cast<TileType>((a) >= static_cast<u8>(b));
+}
+inline TileType operator<=(u8 &a, TileType &b) {
+  return static_cast<TileType>((a) <= static_cast<u8>(b));
+}
 namespace std {
 template <> struct hash<Vector2> {
   size_t operator()(Vector2 const &v) const noexcept {
@@ -170,7 +192,7 @@ static std::unordered_map<TileType, Direction> tileToValue{
     {TileType::SIGNAL_RIGHT_GREEN, Direction::RIGHT},
     {TileType::SIGNAL_DOWN_GREEN, Direction::DOWN},
     {TileType::SIGNAL_LEFT_GREEN, Direction::LEFT}};
-static std::unordered_map<TileType, std::set<Vector2>> allowedMovements = {
+static std::unordered_map<TileType, std::vector<Vector2>> allowedMovements = {
     {TileType::ROAD_UP, {{0, -1}}},
     {TileType::ROAD_DOWN, {{0, 1}}},
     {TileType::ROAD_LEFT, {{-1, 0}}},
@@ -187,9 +209,11 @@ static std::unordered_map<TileType, std::set<Vector2>> allowedMovements = {
     {TileType::ROAD_UP_LEFT_RIGHT, {{0, -1}, {-1, 0}, {1, 0}}},
     {TileType::ROAD_UP_LEFT_DOWN, {{0, -1}, {-1, 0}, {0, 1}}},
     {TileType::ROAD_UP_RIGHT_DOWN, {{0, -1}, {1, 0}, {0, 1}}},
-    {TileType::ROAD_LEFT_DOWN_RIGHT, {Vector2{-1, 0}, {0, 1}, {1, 0}}},
+    {TileType::ROAD_LEFT_DOWN_RIGHT, {{-1, 0}, {0, 1}, {1, 0}}},
 
-    {TileType::SIGNAL_DOWN_RED, {Vector2{0, 1}}},
+    {TileType::ROAD_CROSS, {{-1, 0}, {0, 1}, {1, 0}, {0, -1}}},
+
+    {TileType::SIGNAL_DOWN_RED, {{0, 1}}},
     {TileType::SIGNAL_DOWN_YELLOW, {{0, 1}}},
     {TileType::SIGNAL_DOWN_GREEN, {{0, 1}}},
 
@@ -204,8 +228,17 @@ static std::unordered_map<TileType, std::set<Vector2>> allowedMovements = {
     {TileType::SIGNAL_LEFT_RED, {{-1, 0}}},
     {TileType::SIGNAL_LEFT_YELLOW, {{-1, 0}}},
     {TileType::SIGNAL_LEFT_GREEN, {{-1, 0}}},
-    {TileType::GRASS, {{-1, 0}, {0, 1}, {1, 0}}},
-    {TileType::ROAD_GRASS, {{-1, 0}, {0, 1}, {1, 0}}},
+
+    {TileType::GRASS,
+     {{-1, 0}, {0, 1}, {1, 0}, {0, -1}, {1, 1}, {-1, 1}, {-1, -1}, {1, -1}}},
+    {TileType::ROAD_GRASS,
+     {{-1, 0}, {0, 1}, {1, 0}, {0, -1}, {1, 1}, {-1, 1}, {-1, -1}, {1, -1}}},
+    {TileType::ROAD_DIAGONAL_DOWN_LEFT, {{-1, 1}}},
+    {TileType::ROAD_DIAGONAL_DOWN_RIGHT, {{1, 1}}},
+    {TileType::ROAD_DIAGONAL_UP_RIGHT, {{1, -1}}},
+    {TileType::ROAD_DIAGONAL_UP_LEFT, {{-1, -1}}},
+    {TileType::ROAD_CROSS,
+     {{-1, 0}, {0, 1}, {1, 0}, {0, -1}, {1, 1}, {-1, 1}, {-1, -1}, {1, -1}}},
 };
 static std::unordered_map<TileType, std::vector<Vector2>> movementOnTile = {
     {TileType::ROAD_UP, {{0, 1}}},
@@ -241,15 +274,16 @@ static std::unordered_map<TileType, std::vector<Vector2>> movementOnTile = {
     {TileType::SIGNAL_LEFT_RED, {{-1, 0}}},
     {TileType::SIGNAL_LEFT_YELLOW, {{-1, 0}}},
     {TileType::SIGNAL_LEFT_GREEN, {{-1, 0}}},
-
-    {TileType::GRASS,
+        {TileType::GRASS,
      {{-1, 0}, {0, 1}, {1, 0}, {0, -1}, {1, 1}, {-1, 1}, {-1, -1}, {1, -1}}},
     {TileType::ROAD_GRASS,
      {{-1, 0}, {0, 1}, {1, 0}, {0, -1}, {1, 1}, {-1, 1}, {-1, -1}, {1, -1}}},
-    {TileType::ROAD_DIAGONAL_DOWN_LEFT, {{-1, -1}}},
-    {TileType::ROAD_DIAGONAL_DOWN_RIGHT, {{1, -1}}},
-    {TileType::ROAD_DIAGONAL_UP_RIGHT, {{1, 1}}},
-    {TileType::ROAD_DIAGONAL_UP_LEFT, {{-1, 1}}},
+    {TileType::ROAD_DIAGONAL_DOWN_LEFT, {{-1, 1}}},
+    {TileType::ROAD_DIAGONAL_DOWN_RIGHT, {{1, 1}}},
+    {TileType::ROAD_DIAGONAL_UP_RIGHT, {{1, -1}}},
+    {TileType::ROAD_DIAGONAL_UP_LEFT, {{-1, -1}}},
     {TileType::ROAD_CROSS,
      {{-1, 0}, {0, 1}, {1, 0}, {0, -1}, {1, 1}, {-1, 1}, {-1, -1}, {1, -1}}},
+
+
 };

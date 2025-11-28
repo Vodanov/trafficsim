@@ -63,7 +63,7 @@ void board_t::process_entities(double &time, u8 &pause) {
   for (auto &entity : entities) {
     if (time - entity._time >= ENTITY_UPDATE_TIME) {
       if (entity._position.x == -99) {
-        if (GetTime() - entity._time >= ENTITY_TIMEOUT) {
+        if (time - entity._time >= ENTITY_TIMEOUT) {
           pause = 1;
           entity._position = entity._start;
           get_destination(entity);
@@ -101,26 +101,26 @@ void board_t::process_entities(double &time, u8 &pause) {
       }
             dir++;
       entity.move(dir);
-      // Vector2 positions[] = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}, {-1, -1}, {-1, 1}, {1, -1}, {1, 1}};
-      // Vector2 relative_position = positions[dir];
-      // u8 entityBlocking = 0;
-      // for (auto &other_entity : entities) {
-      //   if (other_entity._position == nextPos + relative_position ||
-      //       other_entity._position == nextNextPos) {
-      //     entityBlocking = 1;
-      //     break;
-      //   }
-      // }
-      // dir++;
-      // if (cell._t == TileType::SIGNAL_DOWN_RED ||
-      //     cell._t == TileType::SIGNAL_LEFT_RED ||
-      //     cell._t == TileType::SIGNAL_RIGHT_RED ||
-      //     cell._t == TileType::SIGNAL_UP_RED || entityBlocking) {
-      //   entity._speed = 0;
-      // } else {
-      //   entity.move(dir);
-      //   entity._time = GetTime();
-      // }
+      Vector2 positions[] = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}, {-1, -1}, {-1, 1}, {1, -1}, {1, 1}};
+      Vector2 relative_position = positions[dir];
+      u8 entityBlocking = 0;
+      for (auto &other_entity : entities) {
+        if (other_entity._position == nextPos + relative_position ||
+            other_entity._position == nextNextPos) {
+          entityBlocking = 1;
+          break;
+        }
+      }
+      dir++;
+      if (cell._t == TileType::SIGNAL_DOWN_RED ||
+          cell._t == TileType::SIGNAL_LEFT_RED ||
+          cell._t == TileType::SIGNAL_RIGHT_RED ||
+          cell._t == TileType::SIGNAL_UP_RED || entityBlocking) {
+        entity._speed = 0;
+      } else {
+        entity.move(dir);
+        entity._time = GetTime();
+      }
     }
   }
 }
@@ -171,22 +171,22 @@ board_t::board_t() {
     i += cellSizeY;
   }
 }
-bool board_t::movement_not_allowed(i32 x, i32 y, Vector2 prev) {
-  if (at(y, x)._t == TileType::BASE_ROAD) {
-    return 1;
-  } else if (at(y, x)._t == TileType::ROAD_CROSS ||
-             at(prev)._t == TileType::ROAD_CROSS ||
-             at(y, x)._t == TileType::GRASS ||
-             at(y, x)._t == TileType::ROAD_GRASS)
-    return 0;
-  float movX = x - prev.x;
-  float movY = y - prev.y;
-  TileType type = at(prev.y, prev.x)._t;
-  auto allowed_movements = allowedMovements[type];
-  if (allowed_movements.size() == 0)
-    return 1;
-  return allowed_movements.find({movX, movY}) == allowed_movements.end();
-}
+// bool board_t::movement_not_allowed(i32 x, i32 y, Vector2 prev) {
+//   if (at(y, x)._t == TileType::BASE_ROAD) {
+//     return 1;
+//   } else if (at(y, x)._t == TileType::ROAD_CROSS ||
+//              at(prev)._t == TileType::ROAD_CROSS ||
+//              at(y, x)._t == TileType::GRASS ||
+//              at(y, x)._t == TileType::ROAD_GRASS)
+//     return 0;
+//   float movX = x - prev.x;
+//   float movY = y - prev.y;
+//   TileType type = at(prev.y, prev.x)._t;
+//   auto allowed_movements = allowedMovements[type];
+//   if (allowed_movements.size() == 0)
+//     return 1;
+//   return allowed_movements.find({movX, movY}) == allowed_movements.end();
+// }
 struct Vec2WithCost {
   Vector2 pos;
   u32 cost;
@@ -228,7 +228,7 @@ void board_t::bfs(std::bitset<tableWidth * tableHeight> &table, Vector2 &end,
       return;
     }
 
-    auto &dirs = movementOnTile[at(pos)._t];
+    auto &dirs = allowedMovements[at(pos)._t];
 
     for (auto [dx, dy] : dirs) {
       i32 nx = x + dx;
