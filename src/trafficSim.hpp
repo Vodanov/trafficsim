@@ -2,10 +2,13 @@
 #include "board.hpp"
 #include "definitions.hpp"
 #include "visible_area.hpp"
+#include <algorithm>
+#include <cstdlib>
 #include <math.h>
 #include <raylib.h>
 #include <string>
 #include <thread>
+#include <utility>
 class trafficSim {
   Camera2D _camera = {0, 0, 0, 0, 0, 1.f};
   board_t board;
@@ -13,8 +16,11 @@ class trafficSim {
   u8 pause = 1;
   VisibleArea area;
   u32 cellX, cellY;
+  u8 road_size{2};
   std::thread entity_process_thread;
-
+  i32 layer{0};
+  float maxSpeed{DEFAULT_SPEED};
+  // 0 - base layer
 public:
   trafficSim() {
     InitWindow(screenWidth, screenHeight, "TrafficSim");
@@ -30,11 +36,11 @@ public:
           double time = GetTime();
           board.process_entities(time, pause);
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
       }
     });
     entity_process_thread.detach();
-    while (!WindowShouldClose() || IsKeyPressed(KEY_CAPS_LOCK)) {
+    while (!WindowShouldClose()) {
       _camera.zoom = expf(logf(_camera.zoom) + (GetMouseWheelMove() * 0.1f));
       camera_checks();
       input_checks();
@@ -43,7 +49,29 @@ public:
       ClearBackground({0, 0, 0, 255});
       if (IsKeyPressed(KEY_SPACE))
         pause = !pause;
-      board.draw_board(pause, VisibleArea(_camera));
+      if (IsKeyPressed(KEY_G)) {
+        std::thread entity_thread([&]() {
+          board.create_entity(104, 25, {0,125,255,255});
+          board.create_entity(220, 25, {0,125,255,255});
+          board.create_entity(104, 26, {0,125,255,255});
+        });
+        std::thread second_thread([&]() {
+          board.create_entity(220, 26, {0,125,255,255});
+          board.create_entity(177, 1, {0,125,255,255});
+          board.create_entity(178, 67, {0,125,255,255});
+          
+        });
+        entity_thread.detach();
+        second_thread.detach();
+      }
+      Vector2 mousePos = GetMousePosition();
+
+      cellX = (mousePos.x / cellSizeX - _camera.offset.x / cellSizeX) /
+              _camera.zoom;
+      cellY = (mousePos.y / cellSizeX - _camera.offset.y / cellSizeY) /
+              _camera.zoom;
+      std::pair<u32, u32> mouse = {cellX, cellY};
+      board.draw_board(pause, VisibleArea(_camera), mouse);
       if (board.bfs_search_res.size() != 0) {
         for (auto position : board.bfs_search_res) {
           float screenX = position.x * 10;
@@ -53,28 +81,43 @@ public:
           DrawRectangle(screenX, screenY, size, size, {0, 0, 255, 20});
         }
       }
-      std::string text = std::to_string(_camera.offset.x);
-      DrawText(std::to_string(board.entity_count()).c_str(),
-               _camera.offset.x / _camera.zoom * -1,
-               _camera.offset.y / _camera.zoom * -1, 25 / _camera.zoom,
-               {0, 255, 0, 255});
-      Vector2 mousePos = GetMousePosition();
-      cellX = (mousePos.x / cellSizeX - _camera.offset.x / cellSizeX) /
-              _camera.zoom;
-      cellY = (mousePos.y / cellSizeX - _camera.offset.y / cellSizeY) /
-              _camera.zoom;
+      // std::string text = std::to_string(_camera.offset.x);
+      // DrawText(std::to_string(board.entity_count()).c_str(),
+      //          _camera.offset.x / _camera.zoom * -1,
+      //          _camera.offset.y / _camera.zoom * -1, 25 / _camera.zoom,
+      //          {0, 255, 0, 255});
+      // DrawText(std::to_string(maxSpeed).c_str(),
+      //          _camera.offset.x / _camera.zoom * -1,
+      //          _camera.offset.y / _camera.zoom * -1 + 25 / _camera.zoom,
+      //          25 / _camera.zoom, {0, 255, 0, 255});
+      // DrawText(std::to_string(road_size).c_str(),
+      //          _camera.offset.x / _camera.zoom * -1,
+      //          _camera.offset.y / _camera.zoom * -1 + 50 / _camera.zoom,
+      //          25 / _camera.zoom, {0, 255, 0, 255});
+      // DrawText(tileTypeNames[type].c_str(),
+      //          _camera.offset.x / _camera.zoom * -1,
+      //          _camera.offset.y / _camera.zoom * -1 + 75 / _camera.zoom,
+      //          25 / _camera.zoom, {0, 255, 0, 255});
+
       if (cellX <= boardWidth / cellSizeX - 1 &&
           cellY <= boardHeight / cellSizeY - 1) {
+        if (IsKeyDown(KEY_R))
+          board.at(cellY, cellX)._maxSpeed = maxSpeed;
+        if (IsKeyDown(KEY_T)) {
+          board.at(cellY, cellX)._maxCapacity = road_size;
+        }
         if (IsKeyPressed(KEY_F)) {
-          board.create_desitation(cellX, cellY);
+          board.at(cellY, cellX).set(TileType::TARGET);
         }
         if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
           board.at(cellY, cellX).set(type);
+          board.at(cellY, cellX)._maxCapacity = road_size;
+          board.at(cellY, cellX)._maxSpeed = maxSpeed;
         }
         if (IsMouseButtonPressed(MOUSE_RIGHT_BUTTON)) {
           std::thread entity_thread(
               [x = cellX, y = cellY, &board = this->board]() {
-                board.create_entity(x, y, {255, 0, 0, 255});
+                board.create_entity(x, y, random_color());
               });
           entity_thread.detach();
         }
@@ -86,11 +129,15 @@ public:
 
 private:
   static void create_thread(u32 x, u32 y, board_t &board) {
-    board.create_entity(x, y, {255, 0, 0, 255});
+    board.create_entity(x, y, random_color());
+  }
+  static Color random_color() {
+    return Color{static_cast<u8>(GetRandomValue(0, 255)),
+                 static_cast<u8>(GetRandomValue(0, 255)),
+                 static_cast<u8>(GetRandomValue(0, 255)), 255};
   }
   void camera_checks() {
-    auto old = _camera;
-    if (IsKeyPressed(KEY_R))
+    if (IsKeyPressed(KEY_BACKSPACE))
       _camera.zoom = 1.0f;
     if (IsKeyDown(KEY_UP))
       _camera.offset.y += cellSizeY / _camera.zoom / 2;
@@ -104,8 +151,6 @@ private:
       _camera.zoom = 3.0f;
     else if (_camera.zoom < 0.1f)
       _camera.zoom = 0.1f;
-    if (old == _camera)
-      return;
     area = VisibleArea(_camera);
   }
   void input_checks() {
@@ -113,8 +158,18 @@ private:
     bool a = IsKeyDown(KEY_A);
     bool s = IsKeyDown(KEY_S);
     bool d = IsKeyDown(KEY_D);
-
+    float speedIncrement = DEFAULT_SPEED / 10;
+    if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyDown(KEY_C))
+      type = TileType::PEDESTRIAN_ROAD;
     if (IsKeyDown(KEY_LEFT_SHIFT)) {
+      if (IsKeyPressed(KEY_V))
+        type = TileType::WATER;
+      if (IsKeyPressed(KEY_C))
+        type = TileType::BUILDING_CITY;
+      if (road_size < 8 && IsKeyPressed(KEY_NINE))
+        road_size++;
+      if (road_size > 0 && IsKeyPressed(KEY_EIGHT))
+        road_size--;
       if (w) {
         if (IsKeyDown(KEY_LEFT_CONTROL)) {
           type = TileType::SIGNAL_UP_YELLOW;
@@ -155,6 +210,13 @@ private:
         }
         return;
       }
+    } else {
+      if (IsKeyPressed(KEY_V))
+        type = TileType::FOREST;
+      if (IsKeyPressed(KEY_NINE))
+        maxSpeed += speedIncrement;
+      if (IsKeyPressed(KEY_EIGHT))
+        maxSpeed -= speedIncrement;
     }
     i32 keyCount = (w ? 1 : 0) + (a ? 1 : 0) + (s ? 1 : 0) + (d ? 1 : 0);
     if (keyCount >= 2) {
@@ -213,16 +275,8 @@ private:
       type = TileType::ROAD_LEFT;
 
     if (IsKeyPressed(KEY_Z))
-      type = TileType::ROAD_DIAGONAL_DOWN_LEFT;
-    if (IsKeyPressed(KEY_C))
-      type = TileType::ROAD_DIAGONAL_DOWN_RIGHT;
+      type = TileType::BASE_ROAD;
     if (IsKeyPressed(KEY_X))
       type = TileType::GRASS;
-    if (IsKeyPressed(KEY_E))
-      type = TileType::ROAD_DIAGONAL_UP_RIGHT;
-    if (IsKeyPressed(KEY_Q))
-      type = TileType::ROAD_DIAGONAL_UP_LEFT;
-    if (IsKeyPressed(KEY_V))
-      type = TileType::BUILDING;
   }
 };

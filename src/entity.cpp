@@ -1,49 +1,48 @@
 #include "entity.hpp"
 #include "definitions.hpp"
+#include <array>
 #include <print>
 #include <raylib.h>
-void entity_t::move(u8 &dir) {
-  if (_speed <= _maxSpeed || _acceleration <= 0)
+void entity_t::move(u8 &dir, u8& moved) {
+  if (_path.empty())
+    return;
+  if (_speed < _maxSpeed)
     _speed += _acceleration;
+  else
+    _speed = _maxSpeed;
   if (dir != _dir) {
     _dir = dir;
     _speed /= 1.5;
   }
-  switch (dir) {
-  case 1:
-    _relative_position.x += _speed;
-    break;
-  case 2:
-    _relative_position.x -= _speed;
-    break;
-  case 3:
-    _relative_position.y += _speed;
-    break;
-  case 4:
-    _relative_position.y -= _speed;
-    break;
-  case 5:
-    _relative_position.y -= _speed;
-    _relative_position.x += _speed;
-    break;
-  case 6:
-    _relative_position.y -= _speed;
-    _relative_position.x -= _speed;
-    break;
-  case 7:
-    _relative_position.y += _speed;
-    _relative_position.x += _speed;
-    break;
-  case 8:
-    _relative_position.y += _speed;
-    _relative_position.x -= _speed;
-    break;
-  }
+  static std::array<Vector2, 8> movs = {
+      Vector2{_acceleration, 0.f},  {-1 * (_acceleration), 0},        {0, _acceleration},
+      {0, _acceleration * -1},      {_acceleration, _acceleration*-1},          {_acceleration * -1, _acceleration*-1},
+      {_acceleration, _acceleration}, {_acceleration * -1, _acceleration}};
+  _relative_position += movs.at(dir);
   if (_relative_position.x >= 1.0f || _relative_position.x <= -1.0f ||
       _relative_position.y >= 1.0f || _relative_position.y <= -1.0f) {
-    _position = _path.top();
-    _path.pop();
-    _relative_position = {0, 0};
+    float nx = 0, ny = 0;
+    moved = 1;
+    if (_relative_position.x >= 1.0f) {
+      nx = _relative_position.x - 1.0f;
+      _position.x = _path.top().x;
+      _path.pop();
+    } else if (_relative_position.x <= -1.0f) {
+      nx = _relative_position.x + 1.0f;
+      _position.x = _path.top().x;
+      _path.pop();
+    }
+
+    if (_relative_position.y >= 1.0f) {
+      ny = _relative_position.y - 1.0f;
+      _position.y = _path.top().y;
+      _path.pop();
+    } else if (_relative_position.y <= -1.0f) {
+      ny = _relative_position.y + 1.0f;
+      _position.y = _path.top().y;
+      _path.pop();
+    }
+    _relative_position = {nx, ny};
   }
 }
 Vector2 entity_t::next_pos() {
@@ -61,9 +60,9 @@ Vector2 entity_t::next_next_pos() {
   return result;
 }
 void entity_t::draw() {
-  DrawRectangle((_position.x + _relative_position.x) * cellSizeX,
-                (_position.y + _relative_position.y) * cellSizeX, cellSizeX,
-                cellSizeY, _col);
+  DrawRectangle(((_position.x + _relative_position.x) * cellSizeX) + CAR_SIZE * _lane,
+                ((_position.y + _relative_position.y) * cellSizeX) + CAR_SIZE * _lane, CAR_SIZE,
+                CAR_SIZE, _col);
 }
 entity_t::entity_t(u16 x, u16 y, Color col) {
   _start = {(float)x, (float)y};

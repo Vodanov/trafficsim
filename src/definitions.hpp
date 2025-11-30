@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <raylib.h>
 #include <set>
+#include <string>
 #include <unordered_map>
 #include <vector>
 using u32 = uint32_t;
@@ -9,31 +10,28 @@ using i32 = int32_t;
 using u16 = uint16_t;
 using u8 = uint8_t;
 constexpr const static u16 TARGET_FPS = 144;
-constexpr const static double SIGNAL_TIME = 2.5;
+constexpr const static double SIGNAL_TIME = 4;
 constexpr const static double MOVEMENT_SIGNAL_TIME = SIGNAL_TIME / 2;
 constexpr const static double ENTITY_UPDATE_TIME = 0.02;
 constexpr const static u32 screenWidth = 1280;
 constexpr const static u32 screenHeight = 720;
-constexpr const static u32 boardWidth = 4000;
+constexpr const static u32 boardWidth = 6000;
 constexpr const static u32 boardHeight = 4000;
 constexpr const static double ENTITY_TIMEOUT = 1;
-constexpr const static u32 cellSizeX = 10;
-constexpr const static u32 cellSizeY = 10;
+constexpr const static u32 cellSizeX = 20;
+constexpr const static u32 cellSizeY = 20;
 constexpr const u32 static tableWidth = boardWidth / cellSizeX;
 constexpr const u32 static tableHeight = boardHeight / cellSizeY;
 constexpr const u8 static CHAR_OFFSET = 70;
+constexpr const static u8 CAR_SIZE = cellSizeX / 2;
+constexpr float DEFAULT_SPEED = 0.76f;
 enum class Direction : u8 {
   NOWHERE,
   UP,
   DOWN,
   LEFT,
   RIGHT,
-    DIAGONAL_UP_RIGHT,
-  DIAGONAL_UP_LEFT,
-  DIAGONAL_DOWN_RIGHT,
-  DIAGONAL_DOWN_LEFT,
 };
-
 inline bool operator==(const Vector2 &a, const Vector2 &b) {
   return a.x == b.x && a.y == b.y;
 }
@@ -60,8 +58,12 @@ inline bool operator!=(const Color &a, const Color &b) { return !(a == b); }
 inline bool operator==(Direction a, Direction b) {
   return static_cast<u8>(a) == static_cast<u8>(b);
 }
-inline void operator-=(Vector2 &a, Vector2 &b) { a = a - b; }
-inline void operator+=(Vector2 &a, Vector2 &b) { a = a + b; }
+inline void operator-=(Vector2& a, Vector2& b){
+    a = a - b;
+}
+inline void operator+=(Vector2& a, Vector2& b){
+    a = a + b;
+}
 inline bool operator!=(Direction a, Direction b) { return !(a == b); }
 inline Direction operator|(Direction a, Direction b) {
   return static_cast<Direction>(static_cast<u8>(a) | static_cast<u8>(b));
@@ -97,10 +99,12 @@ enum class TileType : u8 {
   GRASS,
   ROAD_GRASS,
   BUILDING,
+
   SIGNAL_UP_RED,
   SIGNAL_RIGHT_RED,
   SIGNAL_DOWN_RED,
   SIGNAL_LEFT_RED,
+
   SIGNAL_UP_YELLOW,
   SIGNAL_RIGHT_YELLOW,
   SIGNAL_DOWN_YELLOW,
@@ -110,20 +114,55 @@ enum class TileType : u8 {
   SIGNAL_DOWN_GREEN,
   SIGNAL_LEFT_GREEN,
 
-  ROAD_DIAGONAL_DOWN_LEFT,
-  ROAD_DIAGONAL_DOWN_RIGHT,
-  ROAD_DIAGONAL_UP_LEFT,
-  ROAD_DIAGONAL_UP_RIGHT,
+  FOREST,
+  WATER,
+  HILL,
+  PEDESTRIAN_ROAD,
+  BUILDING_CITY,
+  TARGET,
 };
-static std::unordered_map<u8, TileType> directionToTileType = {
-    {0, TileType::ROAD_RIGHT},      // dir 0: nx >= 1
-    {1, TileType::ROAD_LEFT},        // dir 1: nx <= -1
-    {2, TileType::ROAD_DOWN},        // dir 2: ny >= 1
-    {3, TileType::ROAD_UP},            // dir 3: ny <= -1
-    {4, TileType::ROAD_DIAGONAL_DOWN_RIGHT},  // dir 4: nx>=1 && ny>=1
-    {5, TileType::ROAD_DIAGONAL_DOWN_LEFT},    // dir 5: nx<=-1 && ny>=1
-    {6, TileType::ROAD_DIAGONAL_UP_RIGHT},      // dir 6: nx>=1 && ny<=-1
-    {7, TileType::ROAD_DIAGONAL_UP_LEFT},         // dir 7: nx<=-1 && ny<=-1
+static std::unordered_map<TileType, std::string> tileTypeNames = {
+    {TileType::BASE_ROAD, "BASE_ROAD"},
+    
+    {TileType::ROAD_UP, "ROAD_UP"},
+    {TileType::ROAD_RIGHT, "ROAD_RIGHT"},
+    {TileType::ROAD_DOWN, "ROAD_DOWN"},
+    {TileType::ROAD_LEFT, "ROAD_LEFT"},
+    
+    {TileType::ROAD_UP_DOWN, "ROAD_UP_DOWN"},
+    {TileType::ROAD_LEFT_RIGHT, "ROAD_LEFT_RIGHT"},
+    {TileType::ROAD_LEFT_UP, "ROAD_LEFT_UP"},
+    {TileType::ROAD_RIGHT_UP, "ROAD_RIGHT_UP"},
+    {TileType::ROAD_LEFT_DOWN, "ROAD_LEFT_DOWN"},
+    {TileType::ROAD_RIGHT_DOWN, "ROAD_RIGHT_DOWN"},
+    
+    {TileType::ROAD_UP_LEFT_RIGHT, "ROAD_UP_LEFT_RIGHT"},
+    {TileType::ROAD_UP_LEFT_DOWN, "ROAD_UP_LEFT_DOWN"},
+    {TileType::ROAD_UP_RIGHT_DOWN, "ROAD_UP_RIGHT_DOWN"},
+    {TileType::ROAD_LEFT_DOWN_RIGHT, "ROAD_LEFT_DOWN_RIGHT"},
+    
+    {TileType::ROAD_CROSS, "ROAD_CROSS"},
+    
+    {TileType::GRASS, "GRASS"},
+    {TileType::ROAD_GRASS, "ROAD_GRASS"},
+    {TileType::BUILDING, "BUILDING"},
+    
+    {TileType::SIGNAL_UP_RED, "SIGNAL_UP_RED"},
+    {TileType::SIGNAL_RIGHT_RED, "SIGNAL_RIGHT_RED"},
+    {TileType::SIGNAL_DOWN_RED, "SIGNAL_DOWN_RED"},
+    {TileType::SIGNAL_LEFT_RED, "SIGNAL_LEFT_RED"},
+    {TileType::SIGNAL_UP_YELLOW, "SIGNAL_UP_YELLOW"},
+    {TileType::SIGNAL_RIGHT_YELLOW, "SIGNAL_RIGHT_YELLOW"},
+    {TileType::SIGNAL_DOWN_YELLOW, "SIGNAL_DOWN_YELLOW"},
+    {TileType::SIGNAL_LEFT_YELLOW, "SIGNAL_LEFT_YELLOW"},
+    {TileType::SIGNAL_UP_GREEN, "SIGNAL_UP_GREEN"},
+    {TileType::SIGNAL_RIGHT_GREEN, "SIGNAL_RIGHT_GREEN"},
+    {TileType::SIGNAL_DOWN_GREEN, "SIGNAL_DOWN_GREEN"},
+    {TileType::SIGNAL_LEFT_GREEN, "SIGNAL_LEFT_GREEN"},
+    
+    {TileType::FOREST, "FOREST"},
+    {TileType::WATER, "WATER"},
+    {TileType::HILL, "HILL"}
 };
 inline TileType operator+(TileType &a, TileType &b) {
   return static_cast<TileType>(static_cast<u8>(a) + static_cast<u8>(b));
@@ -228,62 +267,56 @@ static std::unordered_map<TileType, std::vector<Vector2>> allowedMovements = {
     {TileType::SIGNAL_LEFT_RED, {{-1, 0}}},
     {TileType::SIGNAL_LEFT_YELLOW, {{-1, 0}}},
     {TileType::SIGNAL_LEFT_GREEN, {{-1, 0}}},
-
-    {TileType::GRASS,
-     {{-1, 0}, {0, 1}, {1, 0}, {0, -1}, {1, 1}, {-1, 1}, {-1, -1}, {1, -1}}},
-    {TileType::ROAD_GRASS,
-     {{-1, 0}, {0, 1}, {1, 0}, {0, -1}, {1, 1}, {-1, 1}, {-1, -1}, {1, -1}}},
-    {TileType::ROAD_DIAGONAL_DOWN_LEFT, {{-1, 1}}},
-    {TileType::ROAD_DIAGONAL_DOWN_RIGHT, {{1, 1}}},
-    {TileType::ROAD_DIAGONAL_UP_RIGHT, {{1, -1}}},
-    {TileType::ROAD_DIAGONAL_UP_LEFT, {{-1, -1}}},
-    {TileType::ROAD_CROSS,
-     {{-1, 0}, {0, 1}, {1, 0}, {0, -1}, {1, 1}, {-1, 1}, {-1, -1}, {1, -1}}},
+    {TileType::GRASS, {{-1, 0}, {0, 1}, {1, 0}, {0, -1}}},
+    {TileType::ROAD_GRASS, {{-1, 0}, {0, 1}, {1, 0}, {0, -1}}},
+    {TileType::TARGET, {{-1, 0}, {0, 1}, {1, 0}, {0, -1}}},
 };
-static std::unordered_map<TileType, std::vector<Vector2>> movementOnTile = {
-    {TileType::ROAD_UP, {{0, 1}}},
-    {TileType::ROAD_DOWN, {{0, -1}}},
-    {TileType::ROAD_LEFT, {{-1, 0}}},
-    {TileType::ROAD_RIGHT, {{1, 0}}},
+// static std::unordered_map<TileType, std::vector<Vector2>> movementOnTile = {
+//     {TileType::ROAD_UP, {{0, -1}}},
+//     {TileType::ROAD_DOWN, {{0, 1}}},
+//     {TileType::ROAD_LEFT, {{-1, 0}}},
+//     {TileType::ROAD_RIGHT, {{1, 0}}},
 
-    {TileType::ROAD_UP_DOWN, {{0, 1}, {0, -1}}},
-    {TileType::ROAD_LEFT_RIGHT, {{-1, 0}, {1, 0}}},
+//     {TileType::ROAD_UP_DOWN, {{0, 1}, {0, -1}}},
+//     {TileType::ROAD_LEFT_RIGHT, {{-1, 0}, {1, 0}}},
 
-    {TileType::ROAD_LEFT_UP, {{-1, 0}, {0, 1}}},
-    {TileType::ROAD_RIGHT_UP, {{1, 0}, {0, 1}}},
-    {TileType::ROAD_LEFT_DOWN, {{-1, 0}, {0, -1}}},
-    {TileType::ROAD_RIGHT_DOWN, {{1, 0}, {0, -1}}},
+//     {TileType::ROAD_LEFT_UP, {{-1, 0}, {0, -1}}},
+//     {TileType::ROAD_RIGHT_UP, {{1, 0}, {0, -1}}},
+//     {TileType::ROAD_LEFT_DOWN, {{-1, 0}, {0, 1}}},
+//     {TileType::ROAD_RIGHT_DOWN, {{1, 0}, {0, 1}}},
 
-    {TileType::ROAD_UP_LEFT_RIGHT, {{0, 1}, {-1, 0}, {1, 0}}},
-    {TileType::ROAD_UP_LEFT_DOWN, {{0, 1}, {-1, 0}, {0, -1}}},
-    {TileType::ROAD_UP_RIGHT_DOWN, {{0, 1}, {1, 0}, {0, -1}}},
-    {TileType::ROAD_LEFT_DOWN_RIGHT, {{-1, 0}, {0, -1}, {1, 0}}},
+//     {TileType::ROAD_UP_LEFT_RIGHT, {{0, -1}, {-1, 0}, {1, 0}}},
+//     {TileType::ROAD_UP_LEFT_DOWN, {{0, 1}, {-1, 0}, {0, -1}}},
+//     {TileType::ROAD_UP_RIGHT_DOWN, {{0, 1}, {1, 0}, {0, -1}}},
+//     {TileType::ROAD_LEFT_DOWN_RIGHT, {{-1, 0}, {0, 1}, {1, 0}}},
 
-    {TileType::SIGNAL_DOWN_RED, {{0, -1}}},
-    {TileType::SIGNAL_DOWN_YELLOW, {{0, -1}}},
-    {TileType::SIGNAL_DOWN_GREEN, {{0, -1}}},
+//     {TileType::SIGNAL_DOWN_RED, {{0, 1}}},
+//     {TileType::SIGNAL_DOWN_YELLOW, {{0, 1}}},
+//     {TileType::SIGNAL_DOWN_GREEN, {{0, 1}}},
 
-    {TileType::SIGNAL_UP_RED, {{0, 1}}},
-    {TileType::SIGNAL_UP_YELLOW, {{0, 1}}},
-    {TileType::SIGNAL_UP_GREEN, {{0, 1}}},
+//     {TileType::SIGNAL_UP_RED, {{0, -1}}},
+//     {TileType::SIGNAL_UP_YELLOW, {{0, -1}}},
+//     {TileType::SIGNAL_UP_GREEN, {{0, -1}}},
 
-    {TileType::SIGNAL_RIGHT_RED, {{1, 0}}},
-    {TileType::SIGNAL_RIGHT_YELLOW, {{1, 0}}},
-    {TileType::SIGNAL_RIGHT_GREEN, {{1, 0}}},
+//     {TileType::SIGNAL_RIGHT_RED, {{1, 0}}},
+//     {TileType::SIGNAL_RIGHT_YELLOW, {{1, 0}}},
+//     {TileType::SIGNAL_RIGHT_GREEN, {{1, 0}}},
 
-    {TileType::SIGNAL_LEFT_RED, {{-1, 0}}},
-    {TileType::SIGNAL_LEFT_YELLOW, {{-1, 0}}},
-    {TileType::SIGNAL_LEFT_GREEN, {{-1, 0}}},
-        {TileType::GRASS,
-     {{-1, 0}, {0, 1}, {1, 0}, {0, -1}, {1, 1}, {-1, 1}, {-1, -1}, {1, -1}}},
-    {TileType::ROAD_GRASS,
-     {{-1, 0}, {0, 1}, {1, 0}, {0, -1}, {1, 1}, {-1, 1}, {-1, -1}, {1, -1}}},
-    {TileType::ROAD_DIAGONAL_DOWN_LEFT, {{-1, 1}}},
-    {TileType::ROAD_DIAGONAL_DOWN_RIGHT, {{1, 1}}},
-    {TileType::ROAD_DIAGONAL_UP_RIGHT, {{1, -1}}},
-    {TileType::ROAD_DIAGONAL_UP_LEFT, {{-1, -1}}},
-    {TileType::ROAD_CROSS,
-     {{-1, 0}, {0, 1}, {1, 0}, {0, -1}, {1, 1}, {-1, 1}, {-1, -1}, {1, -1}}},
+//     {TileType::SIGNAL_LEFT_RED, {{-1, 0}}},
+//     {TileType::SIGNAL_LEFT_YELLOW, {{-1, 0}}},
+//     {TileType::SIGNAL_LEFT_GREEN, {{-1, 0}}},
 
-
-};
+//     {TileType::GRASS,
+//      {{-1, 0}, {0, 1}, {1, 0}, {0, -1}}},//, {1, 1}, {-1, 1}, {-1, -1}, {1,
+//      -1}}},
+//     {TileType::ROAD_GRASS,
+//      {{-1, 0}, {0, 1}, {1, 0}, {0, -1}}},//, {1, 1}, {-1, 1}, {-1, -1}, {1,
+//      -1}}},
+//     // {TileType::ROAD_DIAGONAL_DOWN_LEFT, {{-1, -1}}},
+//     // {TileType::ROAD_DIAGONAL_DOWN_RIGHT, {{1, -1}}},
+//     // {TileType::ROAD_DIAGONAL_UP_RIGHT, {{1, 1}}},
+//     // {TileType::ROAD_DIAGONAL_UP_LEFT, {{-1, 1}}},
+//     {TileType::ROAD_CROSS,
+//      {{-1, 0}, {0, 1}, {1, 0}, {0, -1}}},//, {1, 1}, {-1, 1}, {-1, -1}, {1,
+//      -1}}},
+// };

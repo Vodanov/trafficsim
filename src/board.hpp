@@ -12,20 +12,22 @@ public:
   cell_t &at(i32 idx, i32 idx2);
   cell_t &at(Vector2 v);
   void create_entity(float x, float y, Color col);
-  void draw_board(u8 &pause, VisibleArea area);
+  void draw_board(u8 &pause, VisibleArea area, std::pair<u32, u32> &mouse);
   void size();
   u32 entity_count();
+  void set_speet(Vector2 pos, float speed) { at(pos)._maxSpeed = speed; }
   void create_desitation(float x, float y);
   board_t();
   ~board_t();
   Camera2D *_camera;
   void process_entities(double &time, u8 &pause);
   std::vector<Vector2> bfs_search_res;
+
 private:
   void bfs(std::bitset<tableWidth * tableHeight> &table, Vector2 &end,
            Vector2 &start, std::stack<Vector2> &path);
-  void draw_cells(u8 &pause, VisibleArea area);
-
+  void draw_cells(u8 &pause, VisibleArea area, std::pair<u32, u32> &mouse);
+  void update_cells(u8& pause);
   void draw_entities();
   bool valid_road(i32 x, i32 y);
   std::vector<std::vector<cell_t>> boardBG;

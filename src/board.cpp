@@ -18,20 +18,41 @@
 #include <unordered_map>
 #include <vector>
 void board_t::create_desitation(float x, float y) {
-  at(y, x)._col.r += 200;
+  // at(y, x)._col.r += 200;
   _destinations.push_back({x, y});
 }
 void board_t::size() {
   std::cout << boardBG.size() << ' ' << boardBG.front().size() << '\n';
 }
 u32 board_t::entity_count() { return this->entities.size(); }
-void board_t::draw_cells(u8 &pause, VisibleArea area) {
+void board_t::update_cells(u8 &pause) {
   double time = GetTime();
+  for (auto &i : boardBG) {
+    for (auto &j : i) {
+      j.update(time, pause);
+    }
+  }
+}
+void board_t::draw_cells(u8 &pause, VisibleArea area,
+                         std::pair<u32, u32> &mouse) {
   for (u32 i = area.startY; i < area.endY; i++)
-    for (u32 j = area.startX; j < area.endX; j++)
-      at(i, j).draw(time, pause);
+    for (u32 j = area.startX; j < area.endX; j++) {
+      if (i == mouse.second && j == mouse.first) {
+        auto color = at(mouse.second, mouse.first)._col;
+        at(i, j)._col = {static_cast<u8>(color.r + 40),
+                         static_cast<unsigned char>(color.g + 40),
+                         static_cast<unsigned char>(color.b + 40), color.a};
+        at(i, j).draw();
+        at(i, j)._col = color;
+      } else
+        at(i, j).draw();
+    }
 }
 void board_t::get_destination(entity_t &ent) {
+  if (_destinations.size() >= 15) {
+    ent._dest = _destinations.at(GetRandomValue(0, _destinations.size() - 1));
+    return;
+  }
   if (_destinations.size() < entities.size() + 5) {
     for (u32 i = 0; i < 5; i++) {
       i32 x = GetRandomValue(0, tableWidth - 1);
@@ -39,11 +60,20 @@ void board_t::get_destination(entity_t &ent) {
       _destinations.push_back({static_cast<float>(x), static_cast<float>(y)});
     }
   }
-  i32 x = GetRandomValue(0, _destinations.size() - 1);
-  if (ent._dest == _destinations.at(x))
-    get_destination(ent);
-  else
-    ent._dest = _destinations.at(x);
+
+  int attempts = 0;
+  const int max_attempts = 10;
+
+  do {
+    i32 x = GetRandomValue(0, _destinations.size() - 1);
+    if (ent._dest != _destinations.at(x)) {
+      ent._dest = _destinations.at(x);
+      return;
+    }
+    attempts++;
+  } while (attempts < max_attempts);
+
+  ent._dest = _destinations.front();
 }
 void board_t::create_entity(float x, float y, Color col) {
 
@@ -51,8 +81,17 @@ void board_t::create_entity(float x, float y, Color col) {
   get_destination(new_ent);
   std::stack<Vector2> paths = find_path({x, y}, new_ent._dest);
   new_ent._path = std::move(paths);
-  new_ent._has_path = 1;
-  entities.push_back(std::move(new_ent));
+  new_ent._has_path = 0;
+  if (new_ent._path.size() != 0) {
+    new_ent._has_path = 1;
+    new_ent._lane = GetRandomValue(0, at(y, x)._maxCapacity - 1);
+    entities.push_back(std::move(new_ent));
+  } else {
+    new_ent._position.x = -99;
+    new_ent._position.y = -99;
+    new_ent._time = GetTime();
+    new_ent._has_path = 0;
+  }
 }
 void board_t::draw_entities() {
   for (auto &entity : entities) {
@@ -61,16 +100,23 @@ void board_t::draw_entities() {
 }
 void board_t::process_entities(double &time, u8 &pause) {
   for (auto &entity : entities) {
-    if (time - entity._time >= ENTITY_UPDATE_TIME) {
+    if (entity._position.x == -99)
+      continue;
+    at(entity._position)._sections.at(entity._lane) = 1;
+  }
+  for (auto &entity : entities) {
+    if (1) {
       if (entity._position.x == -99) {
-        if (time - entity._time >= ENTITY_TIMEOUT) {
+        if (GetTime() - entity._time >= ENTITY_TIMEOUT) {
           pause = 1;
           entity._position = entity._start;
           get_destination(entity);
+          // std::swap(entity._start,entity._dest);
           Vector2 start = entity._start;
           Vector2 dest = entity._dest;
           entity._path = find_path(entity._position, entity._dest);
-          entity._has_path = 1;
+          if (!entity._path.empty())
+            entity._has_path = 1;
           pause = 0;
         }
         continue;
@@ -87,45 +133,71 @@ void board_t::process_entities(double &time, u8 &pause) {
       auto nx = nextPos.x - entity._position.x,
            ny = nextPos.y - entity._position.y;
       u8 dir = (nx >= 1) ? 0 : (nx <= -1) ? 1 : (ny >= 1) ? 2 : 3;
-      if (nx >= 1 && ny >= 1)
-        dir = 4;
-      else if (nx <= -1 && ny >= 1)
-        dir = 5;
-      else if (nx >= 1 && ny <= -1)
-        dir = 6;
-      else if (nx <= -1 && ny <= -1)
-        dir = 7;
-      auto &cell = at(nextPos.y, nextPos.x);
+      auto &cell = at(nextPos);
       if (cell._t == TileType::GRASS) {
-        cell.set(directionToTileType[dir]);
+        cell.set(TileType::ROAD_GRASS);
       }
-            dir++;
-      entity.move(dir);
-      Vector2 positions[] = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}, {-1, -1}, {-1, 1}, {1, -1}, {1, 1}};
+      entity._maxSpeed = cell._maxSpeed;
+      Vector2 positions[] = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
       Vector2 relative_position = positions[dir];
       u8 entityBlocking = 0;
-      for (auto &other_entity : entities) {
-        if (other_entity._position == nextPos + relative_position ||
-            other_entity._position == nextNextPos) {
-          entityBlocking = 1;
-          break;
+      auto &currCell = at(entity._position);
+      u8 origLane = entity._lane;
+      u8 carOnNext = 0;
+      for (auto ent : entities)
+        if (ent._position == nextPos && ent._lane == entity._lane)
+          carOnNext = 1;
+
+      if ((entity._speed != 0 && cell._sections[entity._lane] ||
+           cell._maxCapacity <= entity._lane) ||
+          carOnNext) {
+        entityBlocking = 1;
+        u8 leftLane = origLane - 1;
+        u8 rightLane = origLane + 1;
+        if (leftLane < 8) {
+          if(currCell._sections[leftLane] == 0 &&
+            cell._sections[leftLane] == 0){
+          entity._lane = leftLane;
+          entityBlocking = 0;}
+        } else if (rightLane <= currCell._maxCapacity &&
+                   currCell._sections[rightLane] == 0 &&
+                   cell._sections[rightLane] == 0) {
+          entity._lane = rightLane;
+          entityBlocking = 0;
         }
       }
-      dir++;
+      if (cell._maxCapacity < entity._lane) {
+        entity._lane = cell._maxCapacity - 1;
+        entityBlocking = 1;
+      }
+      if (entity._lane != origLane) {
+        currCell._sections[origLane] = 0;
+        currCell._sections[entity._lane] = 1;
+      }
       if (cell._t == TileType::SIGNAL_DOWN_RED ||
           cell._t == TileType::SIGNAL_LEFT_RED ||
           cell._t == TileType::SIGNAL_RIGHT_RED ||
           cell._t == TileType::SIGNAL_UP_RED || entityBlocking) {
         entity._speed = 0;
       } else {
-        entity.move(dir);
+        u8 moved = 0;
+        entity.move(dir, moved);
         entity._time = GetTime();
+        if (moved) {
+          cell._sections[entity._lane] = 1;
+          currCell._sections[entity._lane] = 0;
+        }
       }
     }
   }
 }
-void board_t::draw_board(u8 &pause, VisibleArea area) {
-  draw_cells(pause, area);
+void board_t::draw_board(u8 &pause, VisibleArea area,
+                         std::pair<u32, u32> &mouse) {
+  update_cells(pause);
+  draw_cells(pause, area, mouse);
+  double time = GetTime();
+  if (!pause)
+    process_entities(time, pause);
   draw_entities();
 }
 cell_t &board_t::at(i32 y, i32 x) { return boardBG.at(y).at(x); }
@@ -138,12 +210,15 @@ board_t::~board_t() {
         file << u8(cell.info() + CHAR_OFFSET);
       else
         file << u8(static_cast<u8>(TileType::GRASS) + CHAR_OFFSET);
+      file << u8(static_cast<u8>(cell._maxCapacity) + CHAR_OFFSET);
+      file << u8(static_cast<u8>(cell._maxSpeed * 100));
     }
     file << '\n';
   }
   file.close();
 }
 board_t::board_t() {
+  entities.reserve(1000);
   boardBG.reserve(boardHeight / cellSizeY);
   std::ifstream file("board.brd");
   if (!file.is_open()) {
@@ -157,106 +232,95 @@ board_t::board_t() {
     return;
   }
   std::string line;
-  i32 i = 0, idx = 0, j = 0;
+  i32 i = 0, j = 0;
   while (std::getline(file, line)) {
     std::vector<cell_t> row;
-    idx = 0;
     j = 0;
-    for (auto &c : line) {
-      row.push_back(cell_t(j, i, static_cast<TileType>(c - 70)));
+    for (size_t idx = 0; idx < line.length(); idx += 3) {
+      u8 tileTypeByte = line[idx] - CHAR_OFFSET;
+      u8 maxCapacity = line[idx + 1] - CHAR_OFFSET;
+      u8 maxSpeed = line[idx + 2] / 100;
+
+      TileType tileType = TileType(tileTypeByte);
+      if(tileType == TileType::TARGET) _destinations.push_back({(float)j / cellSizeY,(float)i / cellSizeX});
+      cell_t cell(j, i, tileType);
+      cell._maxCapacity = maxCapacity;
+      cell._maxSpeed = maxSpeed;
+
+      row.push_back(cell);
       j += cellSizeX;
-      idx++;
     }
     boardBG.emplace_back(row);
     i += cellSizeY;
   }
+  file.close();
 }
-// bool board_t::movement_not_allowed(i32 x, i32 y, Vector2 prev) {
-//   if (at(y, x)._t == TileType::BASE_ROAD) {
-//     return 1;
-//   } else if (at(y, x)._t == TileType::ROAD_CROSS ||
-//              at(prev)._t == TileType::ROAD_CROSS ||
-//              at(y, x)._t == TileType::GRASS ||
-//              at(y, x)._t == TileType::ROAD_GRASS)
-//     return 0;
-//   float movX = x - prev.x;
-//   float movY = y - prev.y;
-//   TileType type = at(prev.y, prev.x)._t;
-//   auto allowed_movements = allowedMovements[type];
-//   if (allowed_movements.size() == 0)
-//     return 1;
-//   return allowed_movements.find({movX, movY}) == allowed_movements.end();
-// }
 struct Vec2WithCost {
   Vector2 pos;
-  u32 cost;
+  float cost;
   bool operator>(const Vec2WithCost &other) const { return cost > other.cost; }
 };
-u32 heuristic(Vector2 start, Vector2 end) {
+inline u32 heuristic_euclidian(Vector2 &start, Vector2 &end) {
   return std::sqrt(std::abs((start.x - end.x) * (start.x - end.x)) +
                    std::abs((start.y - end.y) * (start.y - end.y)));
+}
+inline u32 heuristic(Vector2 &start, Vector2 &end) {
+  return std::abs((start.x - end.x) + std::abs((start.y - end.y)));
 }
 void board_t::bfs(std::bitset<tableWidth * tableHeight> &table, Vector2 &end,
                   Vector2 &start, std::stack<Vector2> &path) {
   std::priority_queue<Vec2WithCost, std::vector<Vec2WithCost>,
                       std::greater<Vec2WithCost>>
-      pq;
+      paths;
+  std::unordered_map<Vector2, Vector2> parents;
+  parents[start] = start;
+  paths.push({start, 0});
+  table[static_cast<int>(start.x + start.y * tableWidth)] = 1;
 
-  std::unordered_map<Vector2, u32> dist;
-  std::unordered_map<Vector2, Vector2> parent;
+  std::vector<Vector2> diffs;
 
-  dist[start] = 0;
-  pq.push({start, 0});
+  while (!paths.empty()) {
+    u32 currCost = paths.top().cost;
+    auto curr = paths.top().pos;
+    paths.pop();
 
-  while (!pq.empty()) {
-    auto [pos, cost] = pq.top();
-    pq.pop();
-
-    if (dist[pos] != cost)
-      continue;
-
-    i32 x = pos.x;
-    i32 y = pos.y;
-
-    if (x == end.x && y == end.y) {
-      Vector2 cur = end;
-      while (cur != start) {
-        path.push(cur);
-        cur = parent[cur];
+    if (curr.x == end.x && curr.y == end.y) {
+      Vector2 node = end;
+      while (node.x != start.x || node.y != start.y) {
+        path.push(node);
+        auto it = parents.find(node);
+        if (it == parents.end() || it->second == node) {
+          break;
+        }
+        node = it->second;
       }
-      path.push(start);
       return;
     }
 
-    auto &dirs = allowedMovements[at(pos)._t];
+    diffs = allowedMovements[at(curr)._t];
+    for (auto [x, y] : diffs) {
+      i32 nx = curr.x + x;
+      i32 ny = curr.y + y;
 
-    for (auto [dx, dy] : dirs) {
-      i32 nx = x + dx;
-      i32 ny = y + dy;
       if (nx < 0 || nx >= tableWidth || ny < 0 || ny >= tableHeight)
         continue;
 
-      i32 idx = nx + ny * tableWidth;
-      if (table[idx])
+      u32 index = nx + ny * tableWidth;
+      if (table[index])
         continue;
 
-      Vector2 npos{(float)nx, (float)ny};
-      // bfs_search_res.push_back(npos);
-      u8 diagonal = (dx != 0 && dy != 0);
-      double tileCost = at(ny, nx)._cost;
-      table[idx] = 1;
-      double moveCost = diagonal ? tileCost * 1.141 : tileCost;
-      double newCost = cost + moveCost;
-
-      if (!dist.count(npos) || newCost < dist[npos]) {
-        dist[npos] = newCost;
-        parent[npos] = pos;
-        pq.push({npos, static_cast<u32>(newCost)});
-      }
+      Vector2 new_pos{static_cast<float>(nx), static_cast<float>(ny)};
+      // bfs_search_res.push_back(new_pos);
+      parents[new_pos] = curr;
+      table[index] = 1;
+      paths.push(
+          {new_pos, currCost + (at(ny, nx)._cost *
+                                (DEFAULT_SPEED / at(ny, nx)._maxSpeed))});
     }
   }
+  std::println("NOT FOUND {} {} {} {} {}", start.x, start.y, end.x, end.y,
+               path.size());
 }
-
 std::stack<Vector2> board_t::find_path(Vector2 start, Vector2 end) {
   std::stack<Vector2> path;
   std::bitset<tableWidth * tableHeight> table;
